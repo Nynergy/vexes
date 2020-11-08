@@ -24,6 +24,22 @@ struct Point {
 
     Point(int xIn, int yIn) : x(xIn), y(yIn) {}
 
+    static bool pointsHaveEqualX(Point a, Point b) {
+        return a.x == b.x;
+    }
+
+    static bool pointsHaveUnequalX(Point a, Point b) {
+        return !pointsHaveEqualX(a, b);
+    }
+
+    static bool pointsHaveEqualY(Point a, Point b) {
+        return a.y == b.y;
+    }
+
+    static bool pointsHaveUnequalY(Point a, Point b) {
+        return !pointsHaveEqualY(a, b);
+    }
+
 };
 
 /////////////////////////////// BASE CLASSES /////////////////////////////////
@@ -148,4 +164,48 @@ void unsetAttributes(int attr, WINDOW * win = NULL) {
     } else {
         attroff(attr);
     }
+}
+
+// Draw horizontal line between two points, using ALTCHARSET
+void drawHLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
+    // Only draw line if points are on the same Y level
+    if(Point::pointsHaveUnequalY(a, b)) { return; }
+
+    setAttributes(A_ALTCHARSET, win);
+    // To avoid issues of order, we check which x is larger
+    if(a.x < b.x) {
+        for(int i = a.x; i < b.x + 1; i++) {
+            drawCharAtPoint(ACS_HLINE, Point(i, a.y), win);
+        }
+    } else if(a.x > b.x) {
+        for(int i = b.x; i < a.x + 1; i++) {
+            drawCharAtPoint(ACS_HLINE, Point(i, b.y), win);
+        }
+    } else {
+        // x is equal, so we only draw a single character
+        drawCharAtPoint(ACS_HLINE, a, win);
+    }
+    unsetAttributes(A_ALTCHARSET, win);
+}
+
+// Draw vertical line between two points, using ALTCHARSET
+void drawVLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
+    // Only draw line if points are on the same X level
+    if(Point::pointsHaveUnequalX(a, b)) { return; }
+
+    setAttributes(A_ALTCHARSET, win);
+    // To avoid issues of order, we check which y is larger
+    if(a.y < b.y) {
+        for(int i = a.y; i < b.y + 1; i++) {
+            drawCharAtPoint(ACS_VLINE, Point(a.x, i), win);
+        }
+    } else if(a.y > b.y) {
+        for(int i = b.y; i < a.y + 1; i++) {
+            drawCharAtPoint(ACS_VLINE, Point(b.x, i), win);
+        }
+    } else {
+        // y is equal, so we only draw a single character
+        drawCharAtPoint(ACS_VLINE, a, win);
+    }
+    unsetAttributes(A_ALTCHARSET, win);
 }

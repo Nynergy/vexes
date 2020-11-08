@@ -25,6 +25,19 @@ public:
         drawStringAtPoint("This string is not centered.", p2);
         drawCenteredStringAtPoint("This string is centered!", p3);
 
+        // We can draw HLines and VLines between two points
+        // NOTE: Drawing a line between two equal points just draws one char
+        Point a1(3, 3);
+        Point b1(9, 3);
+        drawHLineBetweenPoints(a1, b1);
+        Point a2(3, 5);
+        Point b2(3, 11);
+        drawVLineBetweenPoints(a2, b2);
+        Point p4(11, 3);
+        Point p5(5, 8);
+        drawStringAtPoint("We have HLines", p4);
+        drawStringAtPoint("And VLines!", p5);
+
         // We have window-optional wrappers for toggling attributes
         setAttributes(COLOR_PAIR(2));
         Point initP(0, 0);
