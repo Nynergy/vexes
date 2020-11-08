@@ -25,6 +25,14 @@ To see an example of how to use the library, take a look at the `main.cpp`
 file in the `src` directory. The actual source code of the library can be
 found in the `vexes.hpp` file in the `include` directory.
 
+## What can I expect to find in this library?
+
+At the moment, here's what the library offers:
+
+- Engine Base Class
+- Drawing Utils
+    - Easily draw characters, strings, lines, boxes, and more
+
 ------------------------------------------------------------------------------
 
 Remember, _don't curse,_ ___use vexes!___
