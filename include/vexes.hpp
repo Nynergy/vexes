@@ -42,6 +42,20 @@ struct Point {
 
 };
 
+/*
+ * The Box is my way of creating boxes/borders by specifying a set of four
+ * corners. This struct does not contain any information on how the border
+ * looks, only where it appears.
+ */
+struct Box {
+
+    Point ul, ur, ll, lr; // Upper left, upper right, lower left, lower right
+
+    Box(Point ulIn, Point urIn, Point llIn, Point lrIn) :
+        ul(ulIn), ur(urIn), ll(llIn), lr(lrIn) {}
+
+};
+
 /////////////////////////////// BASE CLASSES /////////////////////////////////
 
 /*
@@ -207,5 +221,24 @@ void drawVLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
         // y is equal, so we only draw a single character
         drawCharAtPoint(ACS_VLINE, a, win);
     }
+    unsetAttributes(A_ALTCHARSET, win);
+}
+
+// Draw a default box
+void drawBox(Box b, WINDOW * win = NULL) {
+    // Draw top and bottom of box
+    drawHLineBetweenPoints(b.ul, b.ur, win);
+    drawHLineBetweenPoints(b.ll, b.lr, win);
+
+    // Draw left and right of box
+    drawVLineBetweenPoints(b.ul, b.ll, win);
+    drawVLineBetweenPoints(b.ur, b.lr, win);
+
+    // Draw corners of box
+    setAttributes(A_ALTCHARSET, win);
+    drawCharAtPoint(ACS_ULCORNER, b.ul, win);
+    drawCharAtPoint(ACS_URCORNER, b.ur, win);
+    drawCharAtPoint(ACS_LLCORNER, b.ll, win);
+    drawCharAtPoint(ACS_LRCORNER, b.lr, win);
     unsetAttributes(A_ALTCHARSET, win);
 }

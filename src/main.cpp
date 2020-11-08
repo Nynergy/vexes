@@ -38,6 +38,18 @@ public:
         drawStringAtPoint("We have HLines", p4);
         drawStringAtPoint("And VLines!", p5);
 
+        // We can draw default boxes/borders by defining the corners of a box
+        Point ul(10, 10);
+        Point ur(20, 10);
+        Point ll(10, 20);
+        Point lr(20, 20);
+        Box b(ul, ur, ll, lr);
+        drawBox(b);
+        Point p6(15, 14);
+        Point p7(15, 15);
+        drawCenteredStringAtPoint("Boxes", p6);
+        drawCenteredStringAtPoint("too", p7);
+
         // We have window-optional wrappers for toggling attributes
         setAttributes(COLOR_PAIR(2));
         Point initP(0, 0);
