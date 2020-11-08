@@ -2,12 +2,37 @@
 
 #include <ncurses.h>
 #include <string>
+#include <map>
 
 ////////////////////////////////// MACROS ////////////////////////////////////
 
 // These macros just define a simple way of finding the middle of the screen
 #define MIDHEIGHT   (LINES/2)
 #define MIDWIDTH    (COLS/2)
+
+//////////////////////////////// CONSTANTS ///////////////////////////////////
+
+// This map is used to make using attributes easier and more readable
+static const std::map<std::string, int> attributes = {
+    {"standout", A_STANDOUT},
+    {"underline", A_UNDERLINE},
+    {"reverse", A_REVERSE},
+    {"blink", A_BLINK},
+    {"dim", A_DIM},
+    {"bold", A_BOLD},
+    {"protected", A_PROTECT},
+    {"invisible", A_INVIS},
+    {"alternate", A_ALTCHARSET},
+    {"extract", A_CHARTEXT},
+    {"black", COLOR_PAIR(0)},
+    {"red", COLOR_PAIR(1)},
+    {"green", COLOR_PAIR(2)},
+    {"yellow", COLOR_PAIR(3)},
+    {"blue", COLOR_PAIR(4)},
+    {"magenta", COLOR_PAIR(5)},
+    {"cyan", COLOR_PAIR(6)},
+    {"white", COLOR_PAIR(7)}
+};
 
 ///////////////////////////////// STRUCTS ////////////////////////////////////
 
@@ -128,7 +153,33 @@ public:
 
 /////////////////////////////// DRAWING UTILS ////////////////////////////////
 
-// Functions can take an optional WINDOW *, otherwise use stdscr
+// Drawing functions can take an optional WINDOW *, otherwise use stdscr
+
+// Get attributes by a friendly, human-readable name
+int getAttribute(std::string name) {
+    auto iter = attributes.find(name);
+    // Check if name exists, otherwise return A_NORMAL
+    if(iter == attributes.end()) {
+        return A_NORMAL;
+    } else {
+        return iter->second;
+    }
+}
+
+// Combine an arbitrary amount of attributes into one attribute
+// The first parameter tells the function how many attributes to expect
+int combineAttributes(int num, ...) {
+    va_list argList;
+    int attr = A_NORMAL;
+    va_start(argList, num);
+
+    for(int i = 0; i < num; i++) {
+        attr |= va_arg(argList, int);
+    }
+
+    va_end(argList);
+    return attr;
+}
 
 // Draw character at a given point.
 void drawCharAtPoint(char ch, Point p, WINDOW * win = NULL) {
@@ -185,7 +236,7 @@ void drawHLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
     // Only draw line if points are on the same Y level
     if(Point::pointsHaveUnequalY(a, b)) { return; }
 
-    setAttributes(A_ALTCHARSET, win);
+    setAttributes(getAttribute("alternate"), win);
     // To avoid issues of order, we check which x is larger
     if(a.x < b.x) {
         for(int i = a.x; i < b.x + 1; i++) {
@@ -199,7 +250,7 @@ void drawHLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
         // x is equal, so we only draw a single character
         drawCharAtPoint(ACS_HLINE, a, win);
     }
-    unsetAttributes(A_ALTCHARSET, win);
+    unsetAttributes(getAttribute("alternate"), win);
 }
 
 // Draw vertical line between two points, using ALTCHARSET
@@ -207,7 +258,7 @@ void drawVLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
     // Only draw line if points are on the same X level
     if(Point::pointsHaveUnequalX(a, b)) { return; }
 
-    setAttributes(A_ALTCHARSET, win);
+    setAttributes(getAttribute("alternate"), win);
     // To avoid issues of order, we check which y is larger
     if(a.y < b.y) {
         for(int i = a.y; i < b.y + 1; i++) {
@@ -221,7 +272,7 @@ void drawVLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
         // y is equal, so we only draw a single character
         drawCharAtPoint(ACS_VLINE, a, win);
     }
-    unsetAttributes(A_ALTCHARSET, win);
+    unsetAttributes(getAttribute("alternate"), win);
 }
 
 // Draw a default box
@@ -235,10 +286,36 @@ void drawBox(Box b, WINDOW * win = NULL) {
     drawVLineBetweenPoints(b.ur, b.lr, win);
 
     // Draw corners of box
-    setAttributes(A_ALTCHARSET, win);
+    setAttributes(getAttribute("alternate"), win);
     drawCharAtPoint(ACS_ULCORNER, b.ul, win);
     drawCharAtPoint(ACS_URCORNER, b.ur, win);
     drawCharAtPoint(ACS_LLCORNER, b.ll, win);
     drawCharAtPoint(ACS_LRCORNER, b.lr, win);
-    unsetAttributes(A_ALTCHARSET, win);
+    unsetAttributes(getAttribute("alternate"), win);
+}
+
+// Fill a box with the given character
+void fillBoxWithChar(Box b, char ch, WINDOW * win = NULL) {
+    for(int y = b.ul.y; y < b.lr.y + 1; y++) {
+        // Draw one line at a time to take advantage of addch()
+        if(win != NULL) {
+            wmove(win, y, b.ul.x);
+        } else {
+            move(y, b.ul.x);
+        }
+
+        for(int x = b.ul.x; x < b.lr.x + 1; x++) {
+            if(win != NULL) {
+                waddch(win, ch);
+            } else {
+                addch(ch);
+            }
+        }
+    }
+}
+
+// Clear screen in given box by drawing spaces
+// I do this instead of using clear() to avoid latency issues
+void clearBox(Box b, WINDOW * win = NULL) {
+    fillBoxWithChar(b, ' ', win);
 }

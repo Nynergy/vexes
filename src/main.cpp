@@ -49,17 +49,26 @@ public:
         Point p7(15, 15);
         drawCenteredStringAtPoint("Boxes", p6);
         drawCenteredStringAtPoint("too", p7);
+        // There are also functions for filling a box, and clearing one
+        // Not shown here, but found in the library source code
 
         // We have window-optional wrappers for toggling attributes
-        setAttributes(COLOR_PAIR(2));
+        // Attributes can be grabbed with friendly names
+        setAttributes(getAttribute("green"));
         Point initP(0, 0);
         drawStringAtPoint("Engine initialized successfully!", initP);
-        unsetAttributes(COLOR_PAIR(2));
+        unsetAttributes(getAttribute("green"));
 
-        setAttributes(COLOR_PAIR(1));
+        // We can combine an arbitrary number of attributes into one
+        // NOTE: The first argument must be the number of attributes being
+        // passed into the function
+        int quitAttr = combineAttributes(3, getAttribute("red"),
+                                            getAttribute("reverse"),
+                                            getAttribute("bold"));
+        setAttributes(quitAttr);
         Point quitP(0, 1);
         drawStringAtPoint("Press Q to quit", quitP);
-        unsetAttributes(COLOR_PAIR(1));
+        unsetAttributes(quitAttr);
     }
 
     // We override the run() function to start accepting input. In this case,
