@@ -1,6 +1,32 @@
 #pragma once
 
 #include <ncurses.h>
+#include <string>
+
+////////////////////////////////// MACROS ////////////////////////////////////
+
+// These macros just define a simple way of finding the middle of the screen
+#define MIDHEIGHT   (LINES/2)
+#define MIDWIDTH    (COLS/2)
+
+///////////////////////////////// STRUCTS ////////////////////////////////////
+
+/*
+ * The Point is my way of creating easy to use coordinates, and it uses the
+ * more typical Cartesian style of ordering (x first, y second), as opposed to
+ * ncurses' y-before-x convention. While this convention is understandable
+ * from the perspective of computer graphics, I simply prefer the x-before-y
+ * style more.
+ */
+struct Point {
+
+    int x, y;
+
+    Point(int xIn, int yIn) : x(xIn), y(yIn) {}
+
+};
+
+/////////////////////////////// BASE CLASSES /////////////////////////////////
 
 /*
  * The Engine class is a basic wrapper for initializing and running an ncurses
@@ -69,3 +95,57 @@ public:
     virtual void run() = 0;
 
 };
+
+/////////////////////////////// DRAWING UTILS ////////////////////////////////
+
+// Functions can take an optional WINDOW *, otherwise use stdscr
+
+// Draw character at a given point.
+void drawCharAtPoint(char ch, Point p, WINDOW * win = NULL) {
+    if(win != NULL) {
+        wmove(win, p.y, p.x);
+        waddch(win, ch);
+    } else {
+        move(p.y, p.x);
+        addch(ch);
+    }
+}
+
+// Draw string at a given point
+void drawStringAtPoint(std::string text, Point p, WINDOW * win = NULL) {
+    if(win != NULL) {
+        wmove(win, p.y, p.x);
+        waddstr(win, text.c_str());
+    } else {
+        move(p.y, p.x);
+        addstr(text.c_str());
+    }
+}
+
+// Draw a string centered on a given point
+void drawCenteredStringAtPoint(std::string text, Point p, WINDOW * win = NULL) {
+    // Compute new point offset by half of string's length
+    size_t offset = text.size() / 2;
+    Point newPoint(p.x - offset, p.y);
+    
+    // Delegate to drawStringAtPoint with new point
+    drawStringAtPoint(text, newPoint, win);
+}
+
+// Set attributes for the given WINDOW (or default to stdscr)
+void setAttributes(int attr, WINDOW * win = NULL) {
+    if(win != NULL) {
+        wattron(win, attr);
+    } else {
+        attron(attr);
+    }
+}
+
+// Unset attributes for the given WINDOW (or default to stdscr)
+void unsetAttributes(int attr, WINDOW * win = NULL) {
+    if(win != NULL) {
+        wattroff(win, attr);
+    } else {
+        attroff(attr);
+    }
+}

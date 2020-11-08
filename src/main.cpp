@@ -13,13 +13,28 @@ public:
     // Here, we override the init() function. This subclass doesn't have any
     // members to initialize, so instead we just draw some text to the screen.
     void init() override {
-        attron(COLOR_PAIR(2));
-        mvprintw(0, 0, "Engine initialized successfully!");
-        attroff(COLOR_PAIR(2));
+        // Here, we show off the simple Point and a basic drawing function.
+        // Point takes x before y, which is opposite the normal ncurses way.
+        // Notice the usage of our macros to find the middle of the screen.
+        Point p1(MIDWIDTH, MIDHEIGHT);
+        drawCharAtPoint('#', p1);
 
-        attron(COLOR_PAIR(1));
-        mvprintw(1, 0, "Press Q to quit");
-        attron(COLOR_PAIR(1));
+        // We can do the same with whole strings, even center them on a point!
+        Point p2(MIDWIDTH, MIDHEIGHT - 4);
+        Point p3(MIDWIDTH, MIDHEIGHT - 2);
+        drawStringAtPoint("This string is not centered.", p2);
+        drawCenteredStringAtPoint("This string is centered!", p3);
+
+        // We have window-optional wrappers for toggling attributes
+        setAttributes(COLOR_PAIR(2));
+        Point initP(0, 0);
+        drawStringAtPoint("Engine initialized successfully!", initP);
+        unsetAttributes(COLOR_PAIR(2));
+
+        setAttributes(COLOR_PAIR(1));
+        Point quitP(0, 1);
+        drawStringAtPoint("Press Q to quit", quitP);
+        unsetAttributes(COLOR_PAIR(1));
     }
 
     // We override the run() function to start accepting input. In this case,
