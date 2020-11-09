@@ -30,8 +30,11 @@ found in the `vexes.hpp` file in the `include` directory.
 At the moment, here's what the library offers:
 
 - Engine Base Class
+    - Simple setup and run
 - Drawing Utils
     - Easily draw characters, strings, lines, boxes, and more
+- Panel Base Class
+    - Takes care of sizing, resizing, and drawing
 
 ------------------------------------------------------------------------------
 
