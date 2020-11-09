@@ -47,6 +47,7 @@ struct Point {
 
     int x, y;
 
+    Point() : x(0), y(0) {}
     Point(int xIn, int yIn) : x(xIn), y(yIn) {}
 
     static bool pointsHaveEqualX(Point a, Point b) {
@@ -76,78 +77,10 @@ struct Box {
 
     Point ul, ur, ll, lr; // Upper left, upper right, lower left, lower right
 
+    Box() : ul(Point(0, 0)), ur(Point(COLS - 1, 0)),
+            ll(Point(0, LINES - 1)), lr(Point(COLS - 1, LINES - 1)) {}
     Box(Point ulIn, Point urIn, Point llIn, Point lrIn) :
         ul(ulIn), ur(urIn), ll(llIn), lr(lrIn) {}
-
-};
-
-/////////////////////////////// BASE CLASSES /////////////////////////////////
-
-/*
- * The Engine class is a basic wrapper for initializing and running an ncurses
- * application. The user creates a subclass of the Engine and defines an
- * implementation for the init() and run() methods. The default behavior of
- * the Engine base class takes care of all the low level ncurses stuff like
- * setting up the environment and colors, as well as destroying stdscr when
- * it is deleted.
- */
-class Engine {
-
-private:
-    // Create basic color pairs using transparent background
-    void initializeColorPairs() {
-        int backgroundColor = -1; // Transparency
-        use_default_colors();
-
-        init_pair(0, COLOR_BLACK, backgroundColor);
-        init_pair(1, COLOR_RED, backgroundColor);
-        init_pair(2, COLOR_GREEN, backgroundColor);
-        init_pair(3, COLOR_YELLOW, backgroundColor);
-        init_pair(4, COLOR_BLUE, backgroundColor);
-        init_pair(5, COLOR_MAGENTA, backgroundColor);
-        init_pair(6, COLOR_CYAN, backgroundColor);
-        init_pair(7, COLOR_WHITE, backgroundColor);
-    }
-    // Set various environment variables to reasonable defaults
-    void initializeScreenVariables() {
-        initscr();		        // Begin curses mode
-        cbreak();		        // Disable line buffering
-        keypad(stdscr, TRUE);	// Enable extra keys
-        noecho();		        // Disable echoing keys to console
-        start_color();		    // Enable color mode
-        curs_set(0);		    // Set cursor to be invisible
-        timeout(50);		    // Make getch a non-blocking call
-    }
-    // Initialize curses environment
-    void setupCursesEnvironment() {
-        initializeScreenVariables();
-        initializeColorPairs();
-    }
-    // Make sure to clean up after ourselves
-    void teardownCursesEnvironment() {
-        endwin(); // Destroy stdscr
-    }
-
-public:
-    // Setup curses when the Engine is created
-    Engine() {
-        setupCursesEnvironment();
-    }
-    // Teardown curses when the Engine is destroyed
-    virtual ~Engine() {
-        teardownCursesEnvironment();
-    }
-
-    // The user must implement the following two methods in their subclass:
-    /*
-     * init() is where you should initialize any members of your Engine
-     * subclass, and prepare to start running the application.
-     */
-    virtual void init() = 0;
-    /*
-     * run() is where you start accepting user input and handling events.
-     */
-    virtual void run() = 0;
 
 };
 
@@ -319,3 +252,165 @@ void fillBoxWithChar(Box b, char ch, WINDOW * win = NULL) {
 void clearBox(Box b, WINDOW * win = NULL) {
     fillBoxWithChar(b, ' ', win);
 }
+
+/////////////////////////////// BASE CLASSES /////////////////////////////////
+
+/*
+ * The Engine class is a basic wrapper for initializing and running an ncurses
+ * application. The user creates a subclass of the Engine and defines an
+ * implementation for the init() and run() methods. The default behavior of
+ * the Engine base class takes care of all the low level ncurses stuff like
+ * setting up the environment and colors, as well as destroying stdscr when
+ * it is deleted.
+ */
+class Engine {
+
+private:
+    // Create basic color pairs using transparent background
+    void initializeColorPairs() {
+        int backgroundColor = -1; // Transparency
+        use_default_colors();
+
+        init_pair(0, COLOR_BLACK, backgroundColor);
+        init_pair(1, COLOR_RED, backgroundColor);
+        init_pair(2, COLOR_GREEN, backgroundColor);
+        init_pair(3, COLOR_YELLOW, backgroundColor);
+        init_pair(4, COLOR_BLUE, backgroundColor);
+        init_pair(5, COLOR_MAGENTA, backgroundColor);
+        init_pair(6, COLOR_CYAN, backgroundColor);
+        init_pair(7, COLOR_WHITE, backgroundColor);
+    }
+    // Set various environment variables to reasonable defaults
+    void initializeScreenVariables() {
+        initscr();		        // Begin curses mode
+        cbreak();		        // Disable line buffering
+        keypad(stdscr, TRUE);	// Enable extra keys
+        noecho();		        // Disable echoing keys to console
+        start_color();		    // Enable color mode
+        curs_set(0);		    // Set cursor to be invisible
+        timeout(50);		    // Make getch a non-blocking call
+    }
+    // Initialize curses environment
+    void setupCursesEnvironment() {
+        initializeScreenVariables();
+        initializeColorPairs();
+    }
+    // Make sure to clean up after ourselves
+    void teardownCursesEnvironment() {
+        endwin(); // Destroy stdscr
+    }
+
+public:
+    // Setup curses when the Engine is created
+    Engine() {
+        setupCursesEnvironment();
+    }
+    // Teardown curses when the Engine is destroyed
+    virtual ~Engine() {
+        teardownCursesEnvironment();
+    }
+
+    // The user must implement the following two methods in their subclass:
+    /*
+     * init() is where you should initialize any members of your Engine
+     * subclass, and prepare to start running the application.
+     */
+    virtual void init() = 0;
+    /*
+     * run() is where you start accepting user input and handling events.
+     */
+    virtual void run() = 0;
+
+};
+
+/*
+ * The Panel class is a handy abstraction for making panels in your app that
+ * use separate screens. Supply it with a Box for its corners in relation to
+ * the terminal screen as a whole and it will handle sizing and resizing for
+ * you! When users subclass this base class, they have the option of making
+ * their own drawPanel() function, but the default is provided out of the box.
+ */
+class Panel {
+
+private:
+    WINDOW * win;
+    std::string title;
+    Box globalDimensions;   // globalDimensions is in relation to stdscr
+    Box localDimensions;    // localDimensions is in relation to win
+    int lines, columns;
+
+    // Create new internal window based on global position
+    void setupWindow() {
+        win = newwin(lines + 1, columns + 1, globalDimensions.ul.y, globalDimensions.ul.x);
+    }
+    // Safely destroy internal window
+    void teardownWindow() {
+        delwin(win);
+    }
+    // Default draws a box around the window
+    void drawBorder() {
+        drawBox(localDimensions, win);
+    }
+    // Default finds middle of top line, draws title string
+    void drawTitle() {
+        Point titlePoint(columns / 2, 0);
+        drawCenteredStringAtPoint(title, titlePoint, win);
+    }
+    // Refresh internal window
+    void refreshWindow() {
+        wrefresh(win);
+    }
+    // Destroy old window, make a new one
+    void replaceWindow() {
+        teardownWindow();
+        setupWindow();
+    }
+    // Clear the space of the internal window
+    void clearScreen() {
+        clearBox(localDimensions, win);
+    }
+
+public:
+    // Title string is optional
+    Panel(Box globalDimensionsIn, std::string titleIn = "") {
+        title = titleIn;
+        globalDimensions = globalDimensionsIn;
+
+        // Calculate sizes based on global dimensions
+        lines = globalDimensions.ll.y - globalDimensions.ul.y;
+        columns = globalDimensions.ur.x - globalDimensions.ul.x;
+
+        // Use sizes in creating local dimensions
+        Point ul(0, 0); Point ur(columns, 0);
+        Point ll(0, lines); Point lr(columns, lines);
+        localDimensions = Box(ul, ur, ll, lr);
+
+        // Finally, create the internal window
+        setupWindow();
+    }
+    // Clean up after ourselves
+    virtual ~Panel() {
+        teardownWindow();
+    }
+
+    // The user has the choice of leaving this, or overriding it. The default
+    // just draws the border and title, then refreshes.
+    virtual void drawPanel() {
+        drawBorder();
+        drawTitle();
+        refreshWindow();
+    }
+    // Given a new Box of dimensions, reset the internal sizes and window
+    void resizePanel(Box newGlobalDimensions) {
+        globalDimensions = newGlobalDimensions;
+        lines = newGlobalDimensions.ll.y - newGlobalDimensions.ul.y;
+        columns = newGlobalDimensions.ur.x - newGlobalDimensions.ul.x;
+
+        Point ul(0, 0); Point ur(columns, 0);
+        Point ll(0, lines); Point lr(columns, lines);
+        localDimensions = Box(ul, ur, ll, lr);
+
+        replaceWindow();
+    }
+
+};
