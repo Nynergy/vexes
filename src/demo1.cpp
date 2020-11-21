@@ -1,5 +1,6 @@
 /*
- * In this example, we show how to use various parts of the vexes library.
+ * In this example, we show how to use the Engine base class, as well as a
+ * number of the vexes drawing utilities.
  */
 
 // First, be sure to include the header file where appropriate

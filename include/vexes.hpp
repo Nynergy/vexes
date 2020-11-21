@@ -418,6 +418,8 @@ public:
     WINDOW * getWin() { return win; }
     Box getGlobalDimensions() { return globalDimensions; }
 
+    void setTitle(std::string newTitle) { title = newTitle; }
+
 };
 
 ///////////////////////////// LAYOUT UTILITIES ///////////////////////////////

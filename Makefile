@@ -1,20 +1,12 @@
 ### VARIABLES ###
 
-# Final target executable
-BIN := vexes
-
 # Compiler
 CC := g++
 
 # Source and build output directories
 SRC_DIR := src
 OBJ_DIR := obj
-
-# List source files
-SRC := $(wildcard $(SRC_DIR)/*.cpp)
-
-# From source files, list object files
-OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+DEMO_DIR := demos
 
 # Pass preprocessor flags
 CPPFLAGS := -Iinclude # link include directory
@@ -33,10 +25,13 @@ LDLIBS := -lncurses -ltinfo
 # Indicate when a rule does not produce any target output
 .PHONY: all clean
 
-all: $(BIN)
+all: $(DEMO_DIR)/demo1 $(DEMO_DIR)/demo2
 
 # Linking Phase
-$(BIN): $(OBJ)
+$(DEMO_DIR)/demo1: $(OBJ_DIR)/demo1.o | $(DEMO_DIR)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+$(DEMO_DIR)/demo2: $(OBJ_DIR)/demo2.o | $(DEMO_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # Compiling Phase
@@ -47,13 +42,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 $(OBJ_DIR):
 	mkdir $@
 
+# If demos directory does not exist, make it
+$(DEMO_DIR):
+	mkdir $@
+
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(BIN)
-
-run: all
-	./$(BIN)
-
-# Run executable with valgrind for memory leak analysis
-memcheck: all
-	valgrind -v ./$(BIN)
+	rm -rf $(DEMO_DIR)
