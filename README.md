@@ -21,9 +21,11 @@ much cooler.
 
 ## How can I use this library in my own programs?
 
-To see an example of how to use the library, take a look at the `main.cpp`
-file in the `src` directory. The actual source code of the library can be
-found in the `vexes.hpp` file in the `include` directory.
+All you have to do is include the `vexes.hpp` header file! For an example of
+how to use the library, check out the demos included with the repo, which you
+can compile yourself. Just run `make` from the base directory and it should
+create a `demos` directory. There you can find the binaries for the demos,
+and you can find the source code for them in the `src` directory.
 
 ## What can I expect to find in this library?
 
@@ -35,6 +37,8 @@ At the moment, here's what the library offers:
     - Easily draw characters, strings, lines, boxes, and more
 - Panel Base Class
     - Takes care of sizing, resizing, and drawing
+- Autmomatic Layouts
+    - Define custom layouts/sub-layouts, or use a library default
 
 ------------------------------------------------------------------------------
 
