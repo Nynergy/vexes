@@ -2,7 +2,9 @@
 
 #include <ncurses.h>
 #include <string>
+#include <sstream>
 #include <map>
+#include <vector>
 
 ////////////////////////////////// MACROS ////////////////////////////////////
 
@@ -411,6 +413,311 @@ public:
         localDimensions = Box(ul, ur, ll, lr);
 
         replaceWindow();
+    }
+
+    WINDOW * getWin() { return win; }
+    Box getGlobalDimensions() { return globalDimensions; }
+
+};
+
+///////////////////////////// LAYOUT UTILITIES ///////////////////////////////
+
+/*
+ * Custom exception for denoting invalid ratio strings
+ */
+struct InvalidRatioException : public std::exception {
+
+private:
+    const char * message;
+
+public:
+    InvalidRatioException(const char * messageIn) : message(messageIn) {}
+    const char * what() throw () {
+        return message;
+    }
+
+};
+
+/*
+ * The Layouts class is a utility class designed so that users can either ask
+ * for a custom layout by passing it a valid ratio string (e.g., "1:1:2"), or
+ * they can use one of the default basic layouts. All the class does is return
+ * a vector of Boxes, so the user can use them when making their Panels.
+ */
+class Layouts {
+
+private:
+    // This function is used to see if the numbers in ratio strings are ints
+    static bool isInteger(const std::string & s) {
+       if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) {
+           return false;
+       }
+
+       char * p;
+       strtol(s.c_str(), &p, 10);
+
+       return (*p == 0);
+    }
+
+    /*
+     * A ratio string is valid if and only if it contains an arbitrary series
+     * of integer values delimited by a colon (:) character, e.g. "1:1:2".
+     * Colons cannot appear more than once in a row (so "1::1:2" is not valid)
+     * and cannot appear on either end of the string (":1:1:2" isn't valid).
+     */
+    static void validateRatio(std::string ratio) {
+        // Check for at least one colon
+        if(ratio.find(':') == std::string::npos) {
+            const char * message = "Ratios must contain at least one colon.";
+            throw InvalidRatioException(message);
+        }
+
+        // Check for colons on either end
+        char first = *(ratio.begin());
+        char last = *(--(ratio.end()));
+        if(first == ':' || last == ':') {
+            const char * message = "Ratios cannot begin or end with a colon.";
+            throw InvalidRatioException(message);
+        }
+
+        // Check for double colons
+        int length = ratio.length();
+        for(int i = 1; i < length; i++) {
+            if(ratio[i] == ':' && ratio[i - 1] == ':') {
+                const char * message = "Ratios can only be delimited by single colons.";
+                throw InvalidRatioException(message);
+            }
+        }
+
+        // Split string on colons and check for integers
+        std::stringstream ss(ratio);
+        std::string token;
+        while(std::getline(ss, token, ':')) {
+            // Check if token is integer
+            if(!isInteger(token)) {
+                const char * message = "Ratio can only contain valid integers.";
+                throw InvalidRatioException(message);
+            }
+            // Integer cannot be 0
+            int num = std::stoi(token);
+            if(num == 0) {
+                const char * message = "Ratio cannot contain 0 as an integer.";
+                throw InvalidRatioException(message);
+            }
+        }
+
+        // If all the above checks out, ratio is valid
+        return;
+    }
+
+    // Split the ratio string on colons and cast numbers to ints.
+    static std::vector<int> extractNumsFromString(std::string ratio) {
+        std::vector<int> nums;
+        std::stringstream ss(ratio);
+        std::string token;
+        while(std::getline(ss, token, ':')) {
+            int num = std::stoi(token);
+            nums.push_back(num);
+        }
+
+        return nums;
+    }
+
+    /*
+     * Create Box dimensions and track the position on the screen so far,
+     * resulting in a set of distinct Boxes that take up the proper space
+     * and positions desired.
+     */
+    static std::vector<Box> calculateHBoxes(std::vector<int> nums, Box * dimensions) {
+        // Get an overall ratio base
+        int base = 0;
+        for(int num : nums) {
+            base = base + num;
+        }
+
+        std::vector<Box> boxes;
+
+        // Initialize dimensions based on dimensions (stdscr by default)
+        int fullWidth, fullHeight;
+        int startX, startY;
+        if(dimensions != NULL) {
+            // Base width and height on passed window
+            fullWidth = (dimensions->ur.x - dimensions->ul.x);
+            fullHeight = (dimensions->lr.y - dimensions->ur.y);
+            startX = dimensions->ul.x;
+            startY = dimensions->ul.y;
+        } else {
+            // Base width and height on stdscr
+            fullWidth = COLS - 1;
+            fullHeight = LINES - 1;
+            startX = 0;
+            startY = 0;
+        }
+
+        int lastX = startX - 1;
+        for(int num : nums) {
+            // Calculate how many rows and columns this box takes
+            int rows = fullHeight;
+            float frac = (float) num / base;
+            int columns = (int) (frac * fullWidth);
+
+            // Truncate columns if they would go offscreen
+            if(lastX + 1 + columns >= fullWidth) {
+                columns = fullWidth - (lastX + 1);
+            }
+
+            // Turn those rows and columns into Box dimensions
+            Point ul(lastX + 1, startY);
+            Point ur(lastX + 1 + columns, startY);
+            Point ll(lastX + 1, startY + rows);
+            Point lr(lastX + 1 + columns, startY + rows);
+            Box corners(ul, ur, ll, lr);
+
+            boxes.push_back(corners);
+
+            // Update lastX to move new Box over by old Box width
+            lastX = ur.x;
+        }
+
+        return boxes;
+    }
+
+    // Similar to calculateHBoxes, but for vertical layouts.
+    static std::vector<Box> calculateVBoxes(std::vector<int> nums, Box * dimensions) {
+        // Get an overall ratio base
+        int base = 0;
+        for(int num : nums) {
+            base = base + num;
+        }
+
+        std::vector<Box> boxes;
+
+        // Initialize dimensions based on dimensions (stdscr by default)
+        int fullWidth, fullHeight;
+        int startX, startY;
+        if(dimensions != NULL) {
+            // Base width and height on passed window
+            fullWidth = (dimensions->ur.x - dimensions->ul.x);
+            fullHeight = (dimensions->lr.y - dimensions->ur.y);
+            startX = dimensions->ul.x;
+            startY = dimensions->ul.y;
+        } else {
+            // Base width and height on stdscr
+            fullWidth = COLS - 1;
+            fullHeight = LINES - 1;
+            startX = 0;
+            startY = 0;
+        }
+
+        int lastY = startY - 1;
+        for(int num : nums) {
+            // Calculate how many rows and columns this box takes
+            float frac = (float) num / base;
+            int rows = (int) (frac * fullHeight);
+            int columns = fullWidth;
+
+            // Truncate rows if they would go offscreen
+            if(lastY + 1 + rows >= fullHeight) {
+                rows = fullHeight - (lastY + 1);
+            }
+
+            // Turn those rows and columns into Box dimensions
+            Point ul(startX, lastY + 1);
+            Point ur(startX + columns, lastY + 1);
+            Point ll(startX, lastY + 1 + rows);
+            Point lr(startX + columns, lastY + 1 + rows);
+            Box corners(ul, ur, ll, lr);
+
+            boxes.push_back(corners);
+
+            // Update lastX to move new Box over by old Box width
+            lastY = lr.y;
+        }
+
+        return boxes;
+    }
+
+public:
+    /*
+     * The user must pass a proper ratio string, and it will return a vector
+     * of Boxes, each one representing the position of a Panel in the given
+     * layout. An optional Box can be passed, which can be used to make
+     * "sub-layouts" within a user-defined area. A good use case for this is
+     * to make layouts within a Panel's globalDimensions.
+     *
+     * NOTE: The user is responsible for catching any InvalidRatioExceptions
+     * that are thrown, otherwise the Engine class' automatic curses cleanup
+     * will not run, and the terminal may become stuck in curses mode upon
+     * a runtime error.
+     */
+    static std::vector<Box> customHLayout(std::string ratio, Box * dimensions = NULL) {
+        std::vector<Box> boxes;
+        // Check for proper ratio string
+        try {
+            validateRatio(ratio);
+        } catch(InvalidRatioException& e) {
+            throw InvalidRatioException(e.what());
+        }
+
+        // Extract numbers from ratio
+        std::vector<int> nums = extractNumsFromString(ratio);
+
+        // Populate vector with boxes based on ratio nums
+        boxes = calculateHBoxes(nums, dimensions);
+
+        return boxes;
+    }
+
+    /* 
+     * This is similar to customHLayout(), but for vertical layouts. The user
+     * is still responsible for catching InvalidRatioExceptions.
+     */
+    static std::vector<Box> customVLayout(std::string ratio, Box * dimensions = NULL) {
+        std::vector<Box> boxes;
+        // Check for proper ratio string
+        try {
+            validateRatio(ratio);
+        } catch(InvalidRatioException& e) {
+            throw InvalidRatioException(e.what());
+        }
+
+        // Extract numbers from ratio
+        std::vector<int> nums = extractNumsFromString(ratio);
+
+        // Populate vector with boxes based on ratio nums
+        boxes = calculateVBoxes(nums, dimensions);
+
+        return boxes;
+    }
+
+    /*
+     * What follows are a bunch of default layouts in both orientations. Since
+     * these functions will use valid ratio strings, there is no need to catch
+     * any InvalidRatioExceptions.
+     */
+    static std::vector<Box> HSplit(Box * dimensions = NULL) {
+        return customHLayout("1:1", dimensions);
+    }
+    static std::vector<Box> HTwoThirdsLeft(Box * dimensions = NULL) {
+        return customHLayout("2:1", dimensions);
+    }
+    static std::vector<Box> HTwoThirdsRight(Box * dimensions = NULL) {
+        return customHLayout("1:2", dimensions);
+    }
+    static std::vector<Box> HThirds(Box * dimensions = NULL) {
+        return customHLayout("1:1:1", dimensions);
+    }
+    static std::vector<Box> VSplit(Box * dimensions = NULL) {
+        return customVLayout("1:1", dimensions);
+    }
+    static std::vector<Box> VTwoThirdsAbove(Box * dimensions = NULL) {
+        return customVLayout("2:1", dimensions);
+    }
+    static std::vector<Box> VTwoThirdsBelow(Box * dimensions = NULL) {
+        return customVLayout("1:2", dimensions);
+    }
+    static std::vector<Box> VThirds(Box * dimensions = NULL) {
+        return customVLayout("1:1:1", dimensions);
     }
 
 };
