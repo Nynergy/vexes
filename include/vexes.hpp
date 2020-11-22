@@ -9,8 +9,15 @@
 ////////////////////////////////// MACROS ////////////////////////////////////
 
 // These macros just define a simple way of finding the middle of the screen
-#define MIDHEIGHT   (LINES/2)
-#define MIDWIDTH    (COLS/2)
+#define MIDHEIGHT           (LINES/2)
+#define MIDWIDTH            (COLS/2)
+
+// This macro is for finding the center of a user-created WINDOW
+#define CENTER(w, x, y)     {                          \
+                              getmaxyx((w), (y), (x)); \
+                              x = ((x) / 2) - 1;       \
+                              y = ((y) / 2) - 1;       \
+                            }
 
 //////////////////////////////// CONSTANTS ///////////////////////////////////
 
@@ -166,66 +173,90 @@ void unsetAttributes(int attr, WINDOW * win = NULL) {
     }
 }
 
-// Draw horizontal line between two points, using ALTCHARSET
-void drawHLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
+// Draw horizontal line between two points, using given character
+void drawCustomHLineBetweenPoints(char ch, Point a, Point b, WINDOW * win = NULL) {
     // Only draw line if points are on the same Y level
     if(Point::pointsHaveUnequalY(a, b)) { return; }
 
-    setAttributes(getAttribute("alternate"), win);
     // To avoid issues of order, we check which x is larger
     if(a.x < b.x) {
         for(int i = a.x; i < b.x + 1; i++) {
-            drawCharAtPoint(ACS_HLINE, Point(i, a.y), win);
+            drawCharAtPoint(ch, Point(i, a.y), win);
         }
     } else if(a.x > b.x) {
         for(int i = b.x; i < a.x + 1; i++) {
-            drawCharAtPoint(ACS_HLINE, Point(i, b.y), win);
+            drawCharAtPoint(ch, Point(i, b.y), win);
         }
     } else {
         // x is equal, so we only draw a single character
-        drawCharAtPoint(ACS_HLINE, a, win);
+        drawCharAtPoint(ch, a, win);
     }
+}
+
+// Draw vertical line between two points, using given character
+void drawCustomVLineBetweenPoints(char ch, Point a, Point b, WINDOW * win = NULL) {
+    // Only draw line if points are on the same X level
+    if(Point::pointsHaveUnequalX(a, b)) { return; }
+
+    // To avoid issues of order, we check which y is larger
+    if(a.y < b.y) {
+        for(int i = a.y; i < b.y + 1; i++) {
+            drawCharAtPoint(ch, Point(a.x, i), win);
+        }
+    } else if(a.y > b.y) {
+        for(int i = b.y; i < a.y + 1; i++) {
+            drawCharAtPoint(ch, Point(b.x, i), win);
+        }
+    } else {
+        // y is equal, so we only draw a single character
+        drawCharAtPoint(ch, a, win);
+    }
+}
+
+// Draw horizontal line between two points, using ALTCHARSET
+void drawHLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
+    // Delegate to the custom line with the HLINE character
+    setAttributes(getAttribute("alternate"), win);
+    drawCustomHLineBetweenPoints(ACS_HLINE, a, b, win);
     unsetAttributes(getAttribute("alternate"), win);
 }
 
 // Draw vertical line between two points, using ALTCHARSET
 void drawVLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
-    // Only draw line if points are on the same X level
-    if(Point::pointsHaveUnequalX(a, b)) { return; }
-
+    // Delegate to the custom line with the VLINE character
     setAttributes(getAttribute("alternate"), win);
-    // To avoid issues of order, we check which y is larger
-    if(a.y < b.y) {
-        for(int i = a.y; i < b.y + 1; i++) {
-            drawCharAtPoint(ACS_VLINE, Point(a.x, i), win);
-        }
-    } else if(a.y > b.y) {
-        for(int i = b.y; i < a.y + 1; i++) {
-            drawCharAtPoint(ACS_VLINE, Point(b.x, i), win);
-        }
-    } else {
-        // y is equal, so we only draw a single character
-        drawCharAtPoint(ACS_VLINE, a, win);
-    }
+    drawCustomVLineBetweenPoints(ACS_VLINE, a, b, win);
     unsetAttributes(getAttribute("alternate"), win);
+}
+
+// Draw a box with user-defined characters
+// Characters should always be in the following order:
+// Top, Bottom, Left, Right, Upper Left, Upper Right, Lower Left, Lower Right
+void drawCustomBox(Box b, char * chars, WINDOW * win = NULL) {
+    // Draw top and bottom of box
+    drawCustomHLineBetweenPoints(chars[0], b.ul, b.ur, win);
+    drawCustomHLineBetweenPoints(chars[1], b.ll, b.lr, win);
+
+    // Draw left and right of box
+    drawCustomVLineBetweenPoints(chars[2], b.ul, b.ll, win);
+    drawCustomVLineBetweenPoints(chars[3], b.ur, b.lr, win);
+
+    // Draw corners of the box
+    drawCharAtPoint(chars[4], b.ul, win);
+    drawCharAtPoint(chars[5], b.ur, win);
+    drawCharAtPoint(chars[6], b.ll, win);
+    drawCharAtPoint(chars[7], b.lr, win);
 }
 
 // Draw a default box
 void drawBox(Box b, WINDOW * win = NULL) {
-    // Draw top and bottom of box
-    drawHLineBetweenPoints(b.ul, b.ur, win);
-    drawHLineBetweenPoints(b.ll, b.lr, win);
-
-    // Draw left and right of box
-    drawVLineBetweenPoints(b.ul, b.ll, win);
-    drawVLineBetweenPoints(b.ur, b.lr, win);
-
-    // Draw corners of box
+    // Define alternate characters to use and set attribute on
+    char alts[] = {
+                    ACS_HLINE, ACS_HLINE, ACS_VLINE, ACS_VLINE,
+                    ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER
+                  };
     setAttributes(getAttribute("alternate"), win);
-    drawCharAtPoint(ACS_ULCORNER, b.ul, win);
-    drawCharAtPoint(ACS_URCORNER, b.ur, win);
-    drawCharAtPoint(ACS_LLCORNER, b.ll, win);
-    drawCharAtPoint(ACS_LRCORNER, b.lr, win);
+    drawCustomBox(b, alts, win);
     unsetAttributes(getAttribute("alternate"), win);
 }
 
@@ -267,7 +298,7 @@ void clearBox(Box b, WINDOW * win = NULL) {
  */
 class Engine {
 
-private:
+protected:
     // Create basic color pairs using transparent background
     void initializeColorPairs() {
         int backgroundColor = -1; // Transparency
@@ -334,7 +365,7 @@ public:
  */
 class Panel {
 
-private:
+protected:
     WINDOW * win;
     std::string title;
     Box globalDimensions;   // globalDimensions is in relation to stdscr
