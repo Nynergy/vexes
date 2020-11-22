@@ -37,8 +37,9 @@ At the moment, here's what the library offers:
     - Easily draw characters, strings, lines, boxes, and more
 - Panel Base Class
     - Takes care of sizing, resizing, and drawing
+    - Define custom draw methods
 - Autmomatic Layouts
-    - Define custom layouts/sub-layouts, or use a library default
+    - Generate custom layouts/sub-layouts, or use a library default
 
 ------------------------------------------------------------------------------
 
