@@ -91,6 +91,15 @@ struct Box {
     Box(Point ulIn, Point urIn, Point llIn, Point lrIn) :
         ul(ulIn), ur(urIn), ll(llIn), lr(lrIn) {}
 
+    // This function is a handy way to make a Box with only two points
+    static Box create(Point upperLeft, Point lowerRight) {
+        Point upperRight(lowerRight.x, upperLeft.y);
+        Point lowerLeft(upperLeft.x, lowerRight.y);
+        Box newBox(upperLeft, upperRight, lowerLeft, lowerRight);
+
+        return newBox;
+    }
+
 };
 
 /////////////////////////////// DRAWING UTILS ////////////////////////////////

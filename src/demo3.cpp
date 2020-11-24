@@ -47,8 +47,8 @@ private:
         CENTER(win, midX, midY);
         Point contentPoint(midX, midY);
 
-        // Let's also make it blink
-        int attr = getAttribute("blink");
+        // Let's also make it standout
+        int attr = getAttribute("standout");
         setAttributes(attr, win);
         drawCenteredStringAtPoint(contents, contentPoint, win);
         unsetAttributes(attr, win);
@@ -83,11 +83,12 @@ public:
     // Override init to create our panel and store it in the Engine
     void init() override {
         // First we create our dimensions and title, then the Panel
+        // Note how we only define the upper left and lower right Points
+        // These points are used in the Box::create() function that can
+        // make a Box out of only two Points
         Point ul(MIDWIDTH / 2, MIDHEIGHT / 2);
-        Point ur(MIDWIDTH + (MIDWIDTH / 2), MIDHEIGHT / 2);
-        Point ll(MIDWIDTH / 2, MIDHEIGHT + (MIDHEIGHT / 2));
         Point lr(MIDWIDTH + (MIDWIDTH / 2), MIDHEIGHT + (MIDHEIGHT / 2));
-        Box panelDimensions(ul, ur, ll, lr);
+        Box panelDimensions = Box::create(ul, lr);
         std::string panelTitle = "My Custom Panel";
         myPanel = new MyPanel(panelDimensions, panelTitle);
     }
