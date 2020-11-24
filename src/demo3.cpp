@@ -84,11 +84,11 @@ public:
     void init() override {
         // First we create our dimensions and title, then the Panel
         // Note how we only define the upper left and lower right Points
-        // These points are used in the Box::create() function that can
-        // make a Box out of only two Points
+        // These points are used in the two point constructor for Boxes
+        // You don't have to specify all four corners
         Point ul(MIDWIDTH / 2, MIDHEIGHT / 2);
         Point lr(MIDWIDTH + (MIDWIDTH / 2), MIDHEIGHT + (MIDHEIGHT / 2));
-        Box panelDimensions = Box::create(ul, lr);
+        Box panelDimensions(ul, lr);
         std::string panelTitle = "My Custom Panel";
         myPanel = new MyPanel(panelDimensions, panelTitle);
     }

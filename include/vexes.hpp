@@ -86,19 +86,15 @@ struct Box {
 
     Point ul, ur, ll, lr; // Upper left, upper right, lower left, lower right
 
+    // Default constructor uses LINES and COLS (stdscr)
     Box() : ul(Point(0, 0)), ur(Point(COLS - 1, 0)),
             ll(Point(0, LINES - 1)), lr(Point(COLS - 1, LINES - 1)) {}
+
+    // Construct Boxes with two points, or all four corners
+    Box(Point ulIn, Point lrIn) : ul(ulIn), ur(Point(lrIn.x, ulIn.y)),
+            ll(Point(ulIn.x, lrIn.y)), lr(lrIn) {}
     Box(Point ulIn, Point urIn, Point llIn, Point lrIn) :
         ul(ulIn), ur(urIn), ll(llIn), lr(lrIn) {}
-
-    // This function is a handy way to make a Box with only two points
-    static Box create(Point upperLeft, Point lowerRight) {
-        Point upperRight(lowerRight.x, upperLeft.y);
-        Point lowerLeft(upperLeft.x, lowerRight.y);
-        Box newBox(upperLeft, upperRight, lowerLeft, lowerRight);
-
-        return newBox;
-    }
 
 };
 
