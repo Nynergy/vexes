@@ -419,9 +419,8 @@ public:
         columns = globalDimensions.ur.x - globalDimensions.ul.x;
 
         // Use sizes in creating local dimensions
-        Point ul(0, 0); Point ur(columns, 0);
-        Point ll(0, lines); Point lr(columns, lines);
-        localDimensions = Box(ul, ur, ll, lr);
+        Point ul(0, 0); Point lr(columns, lines);
+        localDimensions = Box(ul, lr);
 
         // Finally, create the internal window
         setupWindow();
@@ -444,15 +443,13 @@ public:
         lines = newGlobalDimensions.ll.y - newGlobalDimensions.ul.y;
         columns = newGlobalDimensions.ur.x - newGlobalDimensions.ul.x;
 
-        Point ul(0, 0); Point ur(columns, 0);
-        Point ll(0, lines); Point lr(columns, lines);
-        localDimensions = Box(ul, ur, ll, lr);
+        Point ul(0, 0); Point lr(columns, lines);
+        localDimensions = Box(ul, lr);
 
         replaceWindow();
     }
 
     WINDOW * getWin() { return win; }
-    Box getGlobalDimensions() { return globalDimensions; }
 
     void setTitle(std::string newTitle) { title = newTitle; }
 
@@ -606,15 +603,13 @@ private:
 
             // Turn those rows and columns into Box dimensions
             Point ul(lastX + 1, startY);
-            Point ur(lastX + 1 + columns, startY);
-            Point ll(lastX + 1, startY + rows);
             Point lr(lastX + 1 + columns, startY + rows);
-            Box corners(ul, ur, ll, lr);
+            Box corners(ul, lr);
 
             boxes.push_back(corners);
 
             // Update lastX to move new Box over by old Box width
-            lastX = ur.x;
+            lastX = lr.x;
         }
 
         return boxes;
@@ -661,10 +656,8 @@ private:
 
             // Turn those rows and columns into Box dimensions
             Point ul(startX, lastY + 1);
-            Point ur(startX + columns, lastY + 1);
-            Point ll(startX, lastY + 1 + rows);
             Point lr(startX + columns, lastY + 1 + rows);
-            Box corners(ul, ur, ll, lr);
+            Box corners(ul, lr);
 
             boxes.push_back(corners);
 

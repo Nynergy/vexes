@@ -15,6 +15,31 @@ private:
     // built in rendering.
     std::vector<Panel *> panels;
 
+    // To handle resizing, we encapsulate it in a method, which is called from
+    // the key handling loop in run()
+    void resizePanels() {
+        // We know we what our layout is supposed to be, so let's grab the Boxes
+        std::vector<Box> outer = Layouts::customHLayout("1:1:2");
+        std::vector<Box> inner = Layouts::VThirds(&(outer[1]));
+
+        // Now that we've created the inner layout from the second Box, we can
+        // safely get rid of it. To simplify things, I'll add the Boxes I want
+        // to a vector of pairs, pairing each Box with the appropriate Panel.
+        std::vector<std::pair<Box, Panel *>> newDim;
+        newDim.push_back(std::make_pair(outer[0], panels[0]));
+        newDim.push_back(std::make_pair(outer[2], panels[1]));
+        newDim.push_back(std::make_pair(inner[0], panels[2]));
+        newDim.push_back(std::make_pair(inner[1], panels[3]));
+        newDim.push_back(std::make_pair(inner[2], panels[4]));
+
+        // Now we simply delegate resizing to each Panel individually
+        for(auto p : newDim) {
+            Box dim = p.first;
+            Panel * panel = p.second;
+            panel->resizePanel(dim);
+        }
+    }
+
 public:
     // Here, we override the init() function.
     void init() override {
@@ -32,29 +57,24 @@ public:
             // The layout functions will always return us a vector of Boxes. These
             // Boxes tell us where our Panels should go in our desired layout. All
             // we have to do is create our Panels using the appropriate Box.
-            for(Box dim : dimensions) {
-                Panel * panel = new Panel(dim);
-                panels.push_back(panel);
-            }
+            panels.push_back(new Panel(dimensions[0]));
+            panels.push_back(new Panel(dimensions[2]));
 
             // You can specify a title at Panel creation, or set one after the
             // fact, like I do here.
             panels[0]->setTitle("Small Panel");
-            panels[2]->setTitle("Large Panel");
+            panels[1]->setTitle("Large Panel");
 
-            // We can also use Panel dimensions to make sub-layouts! I'll turn
-            // the middle Panel into a bunch of small Panels. When specifying
+            // We can also use single dimensions to make sub-layouts! I'll turn
+            // the middle Box into a bunch of small Panels. When specifying
             // dimensions in layouts, be sure to pass in a reference to the
             // Box, not a copy of the Box.
-            Box panelDim = panels[1]->getGlobalDimensions();
             // VThirds will split the given area into three even thirds vertically.
-            std::vector<Box> innerDimensions = Layouts::VThirds(&panelDim);
+            std::vector<Box> innerDimensions = Layouts::VThirds(&(dimensions[1]));
             
-            // Since we aren't using the middle Panel anymore, I remove it.
-            delete panels[1];
-            panels.erase((panels.begin() + 1));
-
             // Now we add the inner Panels to our Panel vector.
+            // This method can be used if you aren't skipping over any of the
+            // Boxes of the layout, like we did for the first layout.
             for(Box dim : innerDimensions) {
                 Panel * panel = new Panel(dim);
                 panels.push_back(panel);
@@ -74,6 +94,19 @@ public:
     void run() override {
         int key;
         while((key = getch()) != 'q') {
+            // We want our Panels to resize if the window changes,
+            // so let's handle that before we render them.
+            switch(key) {
+                case KEY_RESIZE:
+                    // Resize panels to fit new window
+                    resizePanels();
+                    break;
+                default:
+                    // If we wanted to handle more keys, we would catch them
+                    // above this default case.
+                    break;
+            }
+
             // Now we want to render our panels
             for(Panel * p : panels) {
                 p->drawPanel();
