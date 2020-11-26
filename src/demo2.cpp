@@ -26,11 +26,11 @@ private:
         // safely get rid of it. To simplify things, I'll add the Boxes I want
         // to a vector of pairs, pairing each Box with the appropriate Panel.
         std::vector<std::pair<Box, Panel *>> newDim;
-        newDim.push_back(std::make_pair(outer[0], panels[0]));
-        newDim.push_back(std::make_pair(outer[2], panels[1]));
-        newDim.push_back(std::make_pair(inner[0], panels[2]));
-        newDim.push_back(std::make_pair(inner[1], panels[3]));
-        newDim.push_back(std::make_pair(inner[2], panels[4]));
+        newDim.push_back({outer[0], panels[0]});
+        newDim.push_back({outer[2], panels[1]});
+        newDim.push_back({inner[0], panels[2]});
+        newDim.push_back({inner[1], panels[3]});
+        newDim.push_back({inner[2], panels[4]});
 
         // Now we simply delegate resizing to each Panel individually
         for(auto p : newDim) {

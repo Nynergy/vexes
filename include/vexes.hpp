@@ -8,7 +8,7 @@
 
 ////////////////////////////////// MACROS ////////////////////////////////////
 
-// These macros just define a simple way of finding the middle of the screen
+// These macros just define a simple way of finding the middle of stdscr
 #define MIDHEIGHT           (LINES/2)
 #define MIDWIDTH            (COLS/2)
 
@@ -91,6 +91,7 @@ struct Box {
             ll(Point(0, LINES - 1)), lr(Point(COLS - 1, LINES - 1)) {}
 
     // Construct Boxes with two points, or all four corners
+    // Two points is safer, because it ensures that the corners all line up
     Box(Point ulIn, Point lrIn) : ul(ulIn), ur(Point(lrIn.x, ulIn.y)),
             ll(Point(ulIn.x, lrIn.y)), lr(lrIn) {}
     Box(Point ulIn, Point urIn, Point llIn, Point lrIn) :
@@ -530,13 +531,13 @@ private:
         while(std::getline(ss, token, ':')) {
             // Check if token is integer
             if(!isInteger(token)) {
-                const char * message = "Ratio can only contain valid integers.";
+                const char * message = "Ratios can only contain valid integers.";
                 throw InvalidRatioException(message);
             }
             // Integer cannot be 0
             int num = std::stoi(token);
             if(num == 0) {
-                const char * message = "Ratio cannot contain 0 as an integer.";
+                const char * message = "Ratios cannot contain 0 as an integer.";
                 throw InvalidRatioException(message);
             }
         }
