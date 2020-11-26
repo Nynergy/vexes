@@ -34,12 +34,13 @@ At the moment, here's what the library offers:
 - Engine Base Class
     - Simple setup and run
 - Drawing Utils
-    - Easily draw characters, strings, lines, boxes, and more
+    - Quickly draw characters, strings, lines, boxes, and more
 - Panel Base Class
     - Takes care of sizing, resizing, and drawing
     - Define custom draw methods
 - Automatic Layouts
     - Generate custom layouts/sub-layouts, or use a library default
+    - Easily regenerate dimensions for window resizing
 
 ------------------------------------------------------------------------------
 
