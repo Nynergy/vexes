@@ -305,6 +305,10 @@ void Panel::replaceWindow() {
     setupWindow();
 }
 
+void Panel::clearScreen() {
+    clearBox(localDimensions, win);
+}
+
 WINDOW * Panel::getWin() {
     return win;
 }
