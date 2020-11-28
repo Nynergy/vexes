@@ -19,30 +19,6 @@
                               y = ((y) / 2) - 1;       \
                             }
 
-//////////////////////////////// CONSTANTS ///////////////////////////////////
-
-// This map is used to make using attributes easier and more readable
-static const std::map<std::string, int> attributes = {
-    {"standout", A_STANDOUT},
-    {"underline", A_UNDERLINE},
-    {"reverse", A_REVERSE},
-    {"blink", A_BLINK},
-    {"dim", A_DIM},
-    {"bold", A_BOLD},
-    {"protected", A_PROTECT},
-    {"invisible", A_INVIS},
-    {"alternate", A_ALTCHARSET},
-    {"extract", A_CHARTEXT},
-    {"black", COLOR_PAIR(0)},
-    {"red", COLOR_PAIR(1)},
-    {"green", COLOR_PAIR(2)},
-    {"yellow", COLOR_PAIR(3)},
-    {"blue", COLOR_PAIR(4)},
-    {"magenta", COLOR_PAIR(5)},
-    {"cyan", COLOR_PAIR(6)},
-    {"white", COLOR_PAIR(7)}
-};
-
 ///////////////////////////////// STRUCTS ////////////////////////////////////
 
 /*
@@ -104,193 +80,53 @@ struct Box {
 // Drawing functions can take an optional WINDOW *, otherwise use stdscr
 
 // Get attributes by a friendly, human-readable name
-int getAttribute(std::string name) {
-    auto iter = attributes.find(name);
-    // Check if name exists, otherwise return A_NORMAL
-    if(iter == attributes.end()) {
-        return A_NORMAL;
-    } else {
-        return iter->second;
-    }
-}
+int getAttribute(std::string name);
 
 // Combine an arbitrary amount of attributes into one attribute
 // The first parameter tells the function how many attributes to expect
-int combineAttributes(int num, ...) {
-    va_list argList;
-    int attr = A_NORMAL;
-    va_start(argList, num);
-
-    for(int i = 0; i < num; i++) {
-        attr |= va_arg(argList, int);
-    }
-
-    va_end(argList);
-    return attr;
-}
+int combineAttributes(int num, ...);
 
 // Draw character at a given point.
-void drawCharAtPoint(char ch, Point p, WINDOW * win = NULL) {
-    if(win != NULL) {
-        wmove(win, p.y, p.x);
-        waddch(win, ch);
-    } else {
-        move(p.y, p.x);
-        addch(ch);
-    }
-}
+void drawCharAtPoint(char ch, Point p, WINDOW * win = NULL);
 
 // Draw string at a given point
-void drawStringAtPoint(std::string text, Point p, WINDOW * win = NULL) {
-    if(win != NULL) {
-        wmove(win, p.y, p.x);
-        waddstr(win, text.c_str());
-    } else {
-        move(p.y, p.x);
-        addstr(text.c_str());
-    }
-}
+void drawStringAtPoint(std::string text, Point p, WINDOW * win = NULL);
 
 // Draw a string centered on a given point
-void drawCenteredStringAtPoint(std::string text, Point p, WINDOW * win = NULL) {
-    // Compute new point offset by half of string's length
-    size_t offset = text.size() / 2;
-    Point newPoint(p.x - offset, p.y);
-    
-    // Delegate to drawStringAtPoint with new point
-    drawStringAtPoint(text, newPoint, win);
-}
+void drawCenteredStringAtPoint(std::string text, Point p, WINDOW * win = NULL);
 
 // Set attributes for the given WINDOW (or default to stdscr)
-void setAttributes(int attr, WINDOW * win = NULL) {
-    if(win != NULL) {
-        wattron(win, attr);
-    } else {
-        attron(attr);
-    }
-}
+void setAttributes(int attr, WINDOW * win = NULL);
 
 // Unset attributes for the given WINDOW (or default to stdscr)
-void unsetAttributes(int attr, WINDOW * win = NULL) {
-    if(win != NULL) {
-        wattroff(win, attr);
-    } else {
-        attroff(attr);
-    }
-}
+void unsetAttributes(int attr, WINDOW * win = NULL);
 
 // Draw horizontal line between two points, using given character
-void drawCustomHLineBetweenPoints(char ch, Point a, Point b, WINDOW * win = NULL) {
-    // Only draw line if points are on the same Y level
-    if(Point::pointsHaveUnequalY(a, b)) { return; }
-
-    // To avoid issues of order, we check which x is larger
-    if(a.x < b.x) {
-        for(int i = a.x; i < b.x + 1; i++) {
-            drawCharAtPoint(ch, Point(i, a.y), win);
-        }
-    } else if(a.x > b.x) {
-        for(int i = b.x; i < a.x + 1; i++) {
-            drawCharAtPoint(ch, Point(i, b.y), win);
-        }
-    } else {
-        // x is equal, so we only draw a single character
-        drawCharAtPoint(ch, a, win);
-    }
-}
+void drawCustomHLineBetweenPoints(char ch, Point a, Point b, WINDOW * win = NULL);
 
 // Draw vertical line between two points, using given character
-void drawCustomVLineBetweenPoints(char ch, Point a, Point b, WINDOW * win = NULL) {
-    // Only draw line if points are on the same X level
-    if(Point::pointsHaveUnequalX(a, b)) { return; }
-
-    // To avoid issues of order, we check which y is larger
-    if(a.y < b.y) {
-        for(int i = a.y; i < b.y + 1; i++) {
-            drawCharAtPoint(ch, Point(a.x, i), win);
-        }
-    } else if(a.y > b.y) {
-        for(int i = b.y; i < a.y + 1; i++) {
-            drawCharAtPoint(ch, Point(b.x, i), win);
-        }
-    } else {
-        // y is equal, so we only draw a single character
-        drawCharAtPoint(ch, a, win);
-    }
-}
+void drawCustomVLineBetweenPoints(char ch, Point a, Point b, WINDOW * win = NULL);
 
 // Draw horizontal line between two points, using ALTCHARSET
-void drawHLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
-    // Delegate to the custom line with the HLINE character
-    setAttributes(getAttribute("alternate"), win);
-    drawCustomHLineBetweenPoints(ACS_HLINE, a, b, win);
-    unsetAttributes(getAttribute("alternate"), win);
-}
+void drawHLineBetweenPoints(Point a, Point b, WINDOW * win = NULL);
 
 // Draw vertical line between two points, using ALTCHARSET
-void drawVLineBetweenPoints(Point a, Point b, WINDOW * win = NULL) {
-    // Delegate to the custom line with the VLINE character
-    setAttributes(getAttribute("alternate"), win);
-    drawCustomVLineBetweenPoints(ACS_VLINE, a, b, win);
-    unsetAttributes(getAttribute("alternate"), win);
-}
+void drawVLineBetweenPoints(Point a, Point b, WINDOW * win = NULL);
 
 // Draw a box with user-defined characters
 // Characters should always be in the following order:
 // Top, Bottom, Left, Right, Upper Left, Upper Right, Lower Left, Lower Right
-void drawCustomBox(Box b, char * chars, WINDOW * win = NULL) {
-    // Draw top and bottom of box
-    drawCustomHLineBetweenPoints(chars[0], b.ul, b.ur, win);
-    drawCustomHLineBetweenPoints(chars[1], b.ll, b.lr, win);
-
-    // Draw left and right of box
-    drawCustomVLineBetweenPoints(chars[2], b.ul, b.ll, win);
-    drawCustomVLineBetweenPoints(chars[3], b.ur, b.lr, win);
-
-    // Draw corners of the box
-    drawCharAtPoint(chars[4], b.ul, win);
-    drawCharAtPoint(chars[5], b.ur, win);
-    drawCharAtPoint(chars[6], b.ll, win);
-    drawCharAtPoint(chars[7], b.lr, win);
-}
+void drawCustomBox(Box b, char * chars, WINDOW * win = NULL);
 
 // Draw a default box
-void drawBox(Box b, WINDOW * win = NULL) {
-    // Define alternate characters to use and set attribute on
-    char alts[] = {
-                    ACS_HLINE, ACS_HLINE, ACS_VLINE, ACS_VLINE,
-                    ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER
-                  };
-    setAttributes(getAttribute("alternate"), win);
-    drawCustomBox(b, alts, win);
-    unsetAttributes(getAttribute("alternate"), win);
-}
+void drawBox(Box b, WINDOW * win = NULL);
 
 // Fill a box with the given character
-void fillBoxWithChar(Box b, char ch, WINDOW * win = NULL) {
-    for(int y = b.ul.y; y < b.lr.y + 1; y++) {
-        // Draw one line at a time to take advantage of addch()
-        if(win != NULL) {
-            wmove(win, y, b.ul.x);
-        } else {
-            move(y, b.ul.x);
-        }
-
-        for(int x = b.ul.x; x < b.lr.x + 1; x++) {
-            if(win != NULL) {
-                waddch(win, ch);
-            } else {
-                addch(ch);
-            }
-        }
-    }
-}
+void fillBoxWithChar(Box b, char ch, WINDOW * win = NULL);
 
 // Clear screen in given box by drawing spaces
 // I do this instead of using clear() to avoid latency issues
-void clearBox(Box b, WINDOW * win = NULL) {
-    fillBoxWithChar(b, ' ', win);
-}
+void clearBox(Box b, WINDOW * win = NULL);
 
 /////////////////////////////// BASE CLASSES /////////////////////////////////
 
@@ -306,48 +142,19 @@ class Engine {
 
 protected:
     // Create basic color pairs using transparent background
-    void initializeColorPairs() {
-        int backgroundColor = -1; // Transparency
-        use_default_colors();
-
-        init_pair(0, COLOR_BLACK, backgroundColor);
-        init_pair(1, COLOR_RED, backgroundColor);
-        init_pair(2, COLOR_GREEN, backgroundColor);
-        init_pair(3, COLOR_YELLOW, backgroundColor);
-        init_pair(4, COLOR_BLUE, backgroundColor);
-        init_pair(5, COLOR_MAGENTA, backgroundColor);
-        init_pair(6, COLOR_CYAN, backgroundColor);
-        init_pair(7, COLOR_WHITE, backgroundColor);
-    }
+    void initializeColorPairs();
     // Set various environment variables to reasonable defaults
-    void initializeScreenVariables() {
-        initscr();		        // Begin curses mode
-        cbreak();		        // Disable line buffering
-        keypad(stdscr, TRUE);	// Enable extra keys
-        noecho();		        // Disable echoing keys to console
-        start_color();		    // Enable color mode
-        curs_set(0);		    // Set cursor to be invisible
-        timeout(50);		    // Make getch a non-blocking call
-    }
+    void initializeScreenVariables();
     // Initialize curses environment
-    void setupCursesEnvironment() {
-        initializeScreenVariables();
-        initializeColorPairs();
-    }
+    void setupCursesEnvironment();
     // Make sure to clean up after ourselves
-    void teardownCursesEnvironment() {
-        endwin(); // Destroy stdscr
-    }
+    void teardownCursesEnvironment();
 
 public:
     // Setup curses when the Engine is created
-    Engine() {
-        setupCursesEnvironment();
-    }
+    Engine();
     // Teardown curses when the Engine is destroyed
-    virtual ~Engine() {
-        teardownCursesEnvironment();
-    }
+    virtual ~Engine();
 
     // The user must implement the following two methods in their subclass:
     /*
@@ -379,80 +186,35 @@ protected:
     int lines, columns;
 
     // Create new internal window based on global position
-    void setupWindow() {
-        win = newwin(lines + 1, columns + 1, globalDimensions.ul.y, globalDimensions.ul.x);
-    }
+    void setupWindow();
     // Safely destroy internal window
-    void teardownWindow() {
-        delwin(win);
-    }
+    void teardownWindow();
     // Default draws a box around the window
-    void drawBorder() {
-        drawBox(localDimensions, win);
-    }
+    void drawBorder();
     // Default finds middle of top line, draws title string
-    void drawTitle() {
-        Point titlePoint(columns / 2, 0);
-        drawCenteredStringAtPoint(title, titlePoint, win);
-    }
+    void drawTitle();
     // Refresh internal window
-    void refreshWindow() {
-        wrefresh(win);
-    }
+    void refreshWindow();
     // Destroy old window, make a new one
-    void replaceWindow() {
-        teardownWindow();
-        setupWindow();
-    }
+    void replaceWindow();
     // Clear the space of the internal window
-    void clearScreen() {
-        clearBox(localDimensions, win);
-    }
+    void clearScreen();
 
 public:
     // Title string is optional
-    Panel(Box globalDimensionsIn, std::string titleIn = "") {
-        title = titleIn;
-        globalDimensions = globalDimensionsIn;
-
-        // Calculate sizes based on global dimensions
-        lines = globalDimensions.ll.y - globalDimensions.ul.y;
-        columns = globalDimensions.ur.x - globalDimensions.ul.x;
-
-        // Use sizes in creating local dimensions
-        Point ul(0, 0); Point lr(columns, lines);
-        localDimensions = Box(ul, lr);
-
-        // Finally, create the internal window
-        setupWindow();
-    }
+    Panel(Box globalDimensionsIn, std::string titleIn = "");
     // Clean up after ourselves
-    virtual ~Panel() {
-        teardownWindow();
-    }
+    virtual ~Panel();
 
     // The user has the choice of leaving this, or overriding it. The default
     // just draws the border and title, then refreshes.
-    virtual void drawPanel() {
-        drawBorder();
-        drawTitle();
-        refreshWindow();
-    }
+    virtual void drawPanel();
     // Given a new Box of dimensions, reset the internal sizes and window
-    void resizePanel(Box newGlobalDimensions) {
-        globalDimensions = newGlobalDimensions;
-        lines = newGlobalDimensions.ll.y - newGlobalDimensions.ul.y;
-        columns = newGlobalDimensions.ur.x - newGlobalDimensions.ul.x;
+    void resizePanel(Box newGlobalDimensions);
 
-        Point ul(0, 0); Point lr(columns, lines);
-        localDimensions = Box(ul, lr);
+    WINDOW * getWin();
 
-        replaceWindow();
-    }
-
-    WINDOW * getWin() { return win; }
-
-    void setTitle(std::string newTitle) { title = newTitle; }
+    void setTitle(std::string newTitle);
 
 };
 
