@@ -21,11 +21,12 @@ much cooler.
 
 ## How can I use this library in my own programs?
 
-All you have to do is include the `vexes.hpp` header file! For an example of
-how to use the library, check out the demos included with the repo, which you
-can compile yourself. Just run `make` from the base directory and it should
-create a `demos` directory. There you can find the binaries for the demos,
-and you can find the source code for them in the `src` directory.
+All you have to do is include the `vexes.hpp` header file and place the
+implementation file in your source directory! For an example of how to use the
+library, check out the demos included with the repo, which you can compile
+yourself. Just run `make` from the base directory and it should create a
+`demos` directory. There you can find the binaries for the demos, and you can
+find the source code for them in the `src` directory.
 
 ## What can I expect to find in this library?
 
