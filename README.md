@@ -42,6 +42,8 @@ At the moment, here's what the library offers:
 - Automatic Layouts
     - Generate custom layouts/sub-layouts, or use a library default
     - Easily regenerate dimensions for window resizing
+- Form Base Class
+    - Versatile single line input fields without form.h dependency
 
 ------------------------------------------------------------------------------
 
