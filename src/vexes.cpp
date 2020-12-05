@@ -371,7 +371,7 @@ void Form::drawPrompt() {
 void Form::drawBuffer() {
     int bufferSize = (int)buffer.size();
     std::string tempBuffer;
-    int formLength = columns - (promptLength + 2);
+    int formLength = columns;
     if(bufferSize >= formLength) {
         tempBuffer = buffer.substr(bufferSize - formLength, bufferSize);
     } else {
