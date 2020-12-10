@@ -9,6 +9,11 @@ things, personalize it. It's open source, what else do you want from me?
 
 ------------------------------------------------------------------------------
 
+![vexes layouts showcase](showcase.png)
+
+Above you'll see a colorful version of demo2, which showcases the easy to use
+layouts/sub-layouts feature of vexes.
+
 ## What's the deal with this library?
 
 _vexes_ is a library meant to abstract away and simplify some of the more
@@ -44,6 +49,17 @@ At the moment, here's what the library offers:
     - Easily regenerate dimensions for window resizing
 - Form Base Class
     - Versatile single line input fields without form.h dependency
+
+## What programs actually use this library?
+
+Below you can find a list of projects that use vexes:
+
+Project | Description
+--------|------------
+[cascade](https://github.com/Nynergy/cascade) | lightweight todo-list app made to test vexes in production
+
+If you know of another app that uses vexes, or you're the creator of an app
+that uses it, let me know and I can add you to the above table.
 
 ------------------------------------------------------------------------------
 
