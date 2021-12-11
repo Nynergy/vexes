@@ -57,7 +57,7 @@ Below you can find a list of projects that use vexes:
 Project | Description
 --------|------------
 [cascade](https://github.com/Nynergy/cascade) | lightweight todo-list app made to test vexes in production
-[terminal-space](https://github.com/Nynergy/terminal-space) | a game about space, exploration, and making money
+[scintilator](https://github.com/Nynergy/scintilator) | a pretty ASCII light show for the terminal
 
 If you know of another app that uses vexes, or you're the creator of an app
 that uses it, let me know and I can add you to the above table.
