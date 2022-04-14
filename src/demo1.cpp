@@ -22,6 +22,15 @@ public:
         vex::Vec2i p4(5, 8);
         drawStringAtPoint("We have HLines", p3);
         drawStringAtPoint("And VLines!", p4);
+
+        vex::Vec2i box_corner(10, 10);
+        vex::Vec2i box_dimensions(10, 10);
+        vex::IntRect box(box_corner, box_dimensions);
+        drawBox(box);
+        vex::Vec2i p5(15, 14);
+        vex::Vec2i p6(15, 15);
+        drawCenteredStringAtPoint("Boxes", p5);
+        drawCenteredStringAtPoint("too", p6);
     }
 
     void run() override {

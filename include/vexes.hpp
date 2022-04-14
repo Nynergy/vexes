@@ -54,6 +54,35 @@ namespace vex {
 
     typedef Vec2<int> Vec2i;
 
+    template <typename T>
+    struct Rect {
+        T x, y, w, h;
+
+        Rect(T x_, T y_, T w_, T h_): x(x_), y(y_), w(w_), h(h_) {}
+        Rect(T x_, T y_, Vec2<T> dim_): x(x_), y(y_), w(dim_.x), h(dim_.y) {}
+        Rect(Vec2<T> origin_, T w_, T h_): x(origin_.x), y(origin_.y), w(w_), h(h_) {}
+        Rect(Vec2<T> origin_, Vec2<T> dim_): x(origin_.x), y(origin_.y), w(dim_.x), h(dim_.y) {}
+
+        Vec2<T> ul() const {
+            return Vec2<T>(x, y);
+        }
+        Vec2<T> ur() const {
+            return Vec2<T>(x + w, y);
+        }
+        Vec2<T> ll() const {
+            return Vec2<T>(x, y + h);
+        }
+        Vec2<T> lr() const {
+            return Vec2<T>(x + w, y + h);
+        }
+
+        bool operator == (const Rect& other) const {
+            return (x == other.x && y == other.y && w == other.w && h == other.h);
+        }
+    };
+
+    typedef Rect<int> IntRect;
+
 }
 
 namespace vex {
@@ -200,6 +229,31 @@ namespace vex {
             // Delegate to the custom line with the VLINE character
             setAttributes(getAttribute("alternate"), win);
             drawCustomVLineBetweenPoints(ACS_VLINE, a, b, win);
+            unsetAttributes(getAttribute("alternate"), win);
+        }
+        void drawCustomBox(IntRect b, char * chars, WINDOW * win = NULL) {
+            // Draw top and bottom of box
+            drawCustomHLineBetweenPoints(chars[0], b.ul(), b.ur(), win);
+            drawCustomHLineBetweenPoints(chars[1], b.ll(), b.lr(), win);
+
+            // Draw left and right of box
+            drawCustomVLineBetweenPoints(chars[2], b.ul(), b.ll(), win);
+            drawCustomVLineBetweenPoints(chars[3], b.ur(), b.lr(), win);
+
+            // Draw corners of the box
+            drawCharAtPoint(chars[4], b.ul(), win);
+            drawCharAtPoint(chars[5], b.ur(), win);
+            drawCharAtPoint(chars[6], b.ll(), win);
+            drawCharAtPoint(chars[7], b.lr(), win);
+        }
+        void drawBox(IntRect b, WINDOW * win = NULL) {
+            // Define alternate characters to use and set attribute on
+            char alts[] = {
+                            ACS_HLINE, ACS_HLINE, ACS_VLINE, ACS_VLINE,
+                            ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER
+                          };
+            setAttributes(getAttribute("alternate"), win);
+            drawCustomBox(b, alts, win);
             unsetAttributes(getAttribute("alternate"), win);
         }
 
