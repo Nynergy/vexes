@@ -24,6 +24,24 @@ public:
         center_txt.setCentered(true);
         draw(reg_txt);
         draw(center_txt);
+
+        vex::HLine h_line({3, 3}, {9, 3});
+        h_line.setAttributes(getAttribute("yellow"));
+        draw(h_line);
+        vex::Text h_text("We have HLines", {11, 3});
+        draw(h_text);
+
+        vex::VLine v_line({3, 5}, {3, 11});
+        v_line.setAttributes(getAttribute("cyan"));
+        draw(v_line);
+        vex::Text v_text("And VLines", {5, 6});
+        draw(v_text);
+
+        vex::Line a_line('*', {5, 8}, {14, 14});
+        a_line.setAttributes(getAttribute("magenta"));
+        draw(a_line);
+        vex::Text a_text("And Arbitrary Lines!", {12, 10});
+        draw(a_text);
     }
 
     void run() override {

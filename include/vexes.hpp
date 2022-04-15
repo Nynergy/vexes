@@ -3,6 +3,8 @@
 #include <ncurses.h>
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <cmath>
 
 // CONSTANTS
 namespace vex {
@@ -53,6 +55,7 @@ namespace vex {
     };
 
     typedef Vec2<int> Vec2i;
+    typedef Vec2<float> Vec2f;
 
     template <typename T>
     struct Rect {
@@ -124,8 +127,14 @@ namespace vex {
 
         void draw(Renderable& obj);
 
+        int vecDistance(Vec2i a, Vec2i b);
+        Vec2f vecLerp(Vec2i a, Vec2i b, double t);
+        float lerp(double a, double b, double t);
+        Vec2i vecRound(Vec2f v);
+
     public: // UTILITY METHODS
         Vec2i getMidpoint();
+        std::vector<Vec2i> getPointsOnLine(Vec2i a, Vec2i b);
 
     public: // DRAWING METHODS
         int getAttribute(std::string name);
@@ -178,6 +187,40 @@ namespace vex {
 
     };
 
+    class Line : public Renderable {
+
+    private:
+        char glyph;
+        Vec2i a, b;
+        std::vector<Glyph> line;
+
+        void constructPoints(Engine& engine);
+
+    public:
+        Line(char glyph_, Vec2i a_, Vec2i b_);
+
+        virtual void draw(Engine& engine) override;
+
+    };
+
+    class HLine : public Line {
+
+    public:
+        HLine(Vec2i a_, Vec2i b_);
+
+        virtual void draw(Engine& engine) override;
+
+    };
+
+    class VLine : public Line {
+
+    public:
+        VLine(Vec2i a_, Vec2i b_);
+
+        virtual void draw(Engine& engine) override;
+
+    };
+
 }
 
 // IMPLEMENTATIONS
@@ -189,6 +232,7 @@ namespace vex {
         attr = attr_;
     }
 
+    // TEXT
     Text::Text(std::string text_, Vec2i pos_): Renderable(pos_), text(text_) {}
     void Text::draw(Engine& engine) {
         engine.setAttributes(attr);
@@ -200,11 +244,48 @@ namespace vex {
         centered = centered_;
     }
 
+    // GLYPH
     Glyph::Glyph(char glyph_, Vec2i pos_): Renderable(pos_), glyph(glyph_) {}
     void Glyph::draw(Engine& engine) {
         engine.setAttributes(attr);
         engine.drawCharAtPoint(glyph, pos);
         engine.unsetAttributes(attr);
+    }
+
+    // LINES
+    Line::Line(char glyph_, Vec2i a_, Vec2i b_): Renderable(a), glyph(glyph_), a(a_), b(b_) {}
+    void Line::constructPoints(Engine& engine) {
+        std::vector<Vec2i> points = engine.getPointsOnLine(a, b);
+        for(auto& p : points) {
+            line.push_back(Glyph(glyph, p));
+        }
+    }
+    void Line::draw(Engine& engine) {
+        if(line.size() == 0) { constructPoints(engine); }
+
+        engine.setAttributes(attr);
+        for(Glyph& g : line) {
+            engine.draw(g);
+        }
+        engine.unsetAttributes(attr);
+    }
+
+    HLine::HLine(Vec2i a_, Vec2i b_): Line(ACS_HLINE, a_, b_) {
+        // TODO: Ensure points have the same Y value
+    }
+    void HLine::draw(Engine& engine) {
+        engine.setAttributes(engine.getAttribute("alternate"));
+        Line::draw(engine);
+        engine.unsetAttributes(engine.getAttribute("alternate"));
+    }
+
+    VLine::VLine(Vec2i a_, Vec2i b_): Line(ACS_VLINE, a_, b_) {
+        // TODO: Ensure points have the same X value
+    }
+    void VLine::draw(Engine& engine) {
+        engine.setAttributes(engine.getAttribute("alternate"));
+        Line::draw(engine);
+        engine.unsetAttributes(engine.getAttribute("alternate"));
     }
 
     // ENGINE BASE CLASS
@@ -245,6 +326,29 @@ namespace vex {
     // UTILITY METHODS
     Vec2i Engine::getMidpoint() {
         return {COLS / 2, LINES / 2};
+    }
+    std::vector<Vec2i> Engine::getPointsOnLine(Vec2i a, Vec2i b) {
+        int n = vecDistance(a, b);
+        std::vector<Vec2i> points = {};
+        double step = 1.0 / std::max(n, 1);
+
+        for(int i = 0; i <= n; i++) {
+            points.push_back(vecRound(vecLerp(a, b, step * i)));
+        }
+
+        return points;
+    }
+    int Engine::vecDistance(Vec2i a, Vec2i b) {
+        return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
+    }
+    Vec2f Engine::vecLerp(Vec2i a, Vec2i b, double t) {
+        return Vec2f(lerp(a.x, b.x, t), lerp(a.y, b.y, t));
+    }
+    float Engine::lerp(double a, double b, double t) {
+        return a * (1 - t) + b * t;
+    }
+    Vec2i Engine::vecRound(Vec2f v) {
+        return Vec2i(int(std::round(v.x)), int(std::round(v.y)));
     }
 
     // DRAWING METHODS
