@@ -2,12 +2,12 @@
 
 #include <ncurses.h>
 #include <string>
-#include <map>
+#include <unordered_map>
 
 // CONSTANTS
 namespace vex {
 
-    static const std::map<std::string, int> attributes = {
+    static const std::unordered_map<std::string, int> attributes = {
         {"standout", A_STANDOUT},
         {"underline", A_UNDERLINE},
         {"reverse", A_REVERSE},
@@ -97,11 +97,13 @@ namespace vex {
 
     protected:
         Vec2i pos;
+        int attr = A_NORMAL;
 
     public:
         Renderable(Vec2i pos_);
 
         virtual void draw(Engine& engine) = 0;
+        void setAttributes(int attr_);
 
     };
 
@@ -150,17 +152,27 @@ namespace vex {
 // RENDERABLE SUBCLASSES
 namespace vex {
 
+    class Glyph : public Renderable {
+
+    private:
+        char glyph;
+
+    public:
+        Glyph(char glyph_, Vec2i pos_);
+
+        virtual void draw(Engine& engine) override;
+
+    };
+
     class Text : public Renderable {
 
     private:
         std::string text;
-        int attr = A_NORMAL;
 
     public:
         Text(std::string text_, Vec2i pos_);
 
         virtual void draw(Engine& engine) override;
-        void setAttributes(int attr_);
 
     };
 
@@ -171,6 +183,9 @@ namespace vex {
 
     // RENDERABLES
     Renderable::Renderable(Vec2i pos_): pos(pos_) {}
+    void Renderable::setAttributes(int attr_) {
+        attr = attr_;
+    }
 
     Text::Text(std::string text_, Vec2i pos_): Renderable(pos_), text(text_) {}
     void Text::draw(Engine& engine) {
@@ -178,8 +193,12 @@ namespace vex {
         engine.drawStringAtPoint(text, pos);
         engine.unsetAttributes(attr);
     }
-    void Text::setAttributes(int attr_) {
-        attr = attr_;
+
+    Glyph::Glyph(char glyph_, Vec2i pos_): Renderable(pos_), glyph(glyph_) {}
+    void Glyph::draw(Engine& engine) {
+        engine.setAttributes(attr);
+        engine.drawCharAtPoint(glyph, pos);
+        engine.unsetAttributes(attr);
     }
 
     // ENGINE BASE CLASS

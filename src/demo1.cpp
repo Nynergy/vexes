@@ -14,6 +14,9 @@ public:
         vex::Text quit_txt("Press Q to quit.", {0, 1});
         quit_txt.setAttributes(quit_attr);
         draw(quit_txt);
+
+        vex::Glyph mid_glyph('#', getMidpoint());
+        draw(mid_glyph);
     }
 
     void run() override {
