@@ -15,8 +15,15 @@ public:
         quit_txt.setAttributes(quit_attr);
         draw(quit_txt);
 
-        vex::Glyph mid_glyph('#', getMidpoint());
+        vex::Vec2i midpoint = getMidpoint();
+        vex::Glyph mid_glyph('#', midpoint);
         draw(mid_glyph);
+
+        vex::Text reg_txt("This string is not centered.", {midpoint.x, midpoint.y - 4});
+        vex::Text center_txt("This string is centered!", {midpoint.x, midpoint.y - 2});
+        center_txt.setCentered(true);
+        draw(reg_txt);
+        draw(center_txt);
     }
 
     void run() override {

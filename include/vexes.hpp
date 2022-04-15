@@ -168,11 +168,13 @@ namespace vex {
 
     private:
         std::string text;
+        bool centered = false;
 
     public:
         Text(std::string text_, Vec2i pos_);
 
         virtual void draw(Engine& engine) override;
+        void setCentered(bool centered_);
 
     };
 
@@ -190,8 +192,12 @@ namespace vex {
     Text::Text(std::string text_, Vec2i pos_): Renderable(pos_), text(text_) {}
     void Text::draw(Engine& engine) {
         engine.setAttributes(attr);
-        engine.drawStringAtPoint(text, pos);
+        if(centered) { engine.drawCenteredStringAtPoint(text, pos); }
+        else { engine.drawStringAtPoint(text, pos); }
         engine.unsetAttributes(attr);
+    }
+    void Text::setCentered(bool centered_) {
+        centered = centered_;
     }
 
     Glyph::Glyph(char glyph_, Vec2i pos_): Renderable(pos_), glyph(glyph_) {}
