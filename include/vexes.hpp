@@ -157,6 +157,18 @@ namespace vex {
                 attroff(attr);
             }
         }
+        int combineAttributes(int num, ...) {
+            va_list argList;
+            int attr = A_NORMAL;
+            va_start(argList, num);
+
+            for(int i = 0; i < num; i++) {
+                attr |= va_arg(argList, int);
+            }
+
+            va_end(argList);
+            return attr;
+        }
         void drawCharAtPoint(char ch, Vec2i p, WINDOW * win = NULL) {
             if(win != NULL) {
                 wmove(win, p.y, p.x);

@@ -31,6 +31,19 @@ public:
         vex::Vec2i p6(15, 15);
         drawCenteredStringAtPoint("Boxes", p5);
         drawCenteredStringAtPoint("too", p6);
+
+        setAttributes(getAttribute("green"));
+        vex::Vec2i init_p(0, 0);
+        drawStringAtPoint("Engine initialized successfully!", init_p);
+        unsetAttributes(getAttribute("green"));
+
+        int quit_attr = combineAttributes(3, getAttribute("red"),
+                                             getAttribute("reverse"),
+                                             getAttribute("bold"));
+        setAttributes(quit_attr);
+        vex::Vec2i quit_p(0, 1);
+        drawStringAtPoint("Press Q to quit", quit_p);
+        unsetAttributes(quit_attr);
     }
 
     void run() override {
