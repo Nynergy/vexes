@@ -106,6 +106,7 @@ namespace vex {
 
     public:
         Renderable(Vec2i pos_);
+        virtual ~Renderable();
 
         virtual void draw(Engine& engine) = 0;
         void setAttributes(int attr_);
@@ -252,6 +253,7 @@ namespace vex {
 
     // RENDERABLES
     Renderable::Renderable(Vec2i pos_): pos(pos_) {}
+    Renderable::~Renderable() {}
     void Renderable::setAttributes(int attr_) {
         attr = attr_;
     }
