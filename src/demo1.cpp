@@ -3,16 +3,17 @@
 class DemoEngine : public vex::Engine {
 
 public:
+    // TODO: Push Renderables into an array, iterated over in the run() method
     void init() override {
         // vex::Text
-        vex::Text init_txt("Engine initialized successfully!", {0, 0});
+        vex::Text init_txt("Engine initialized successfully!", {0, LINES - 2});
         init_txt.setAttributes(getAttribute("green"));
         draw(init_txt);
 
         int quit_attr = combineAttributes(3, getAttribute("red"),
                                              getAttribute("reverse"),
                                              getAttribute("bold"));
-        vex::Text quit_txt("Press Q to quit.", {0, 1});
+        vex::Text quit_txt("Press Q to quit.", {0, LINES - 1});
         quit_txt.setAttributes(quit_attr);
         draw(quit_txt);
 
@@ -22,8 +23,6 @@ public:
         center_txt.setCentered(true);
         draw(reg_txt);
         draw(center_txt);
-
-        // TODO: Vertical Text
 
         // vex::Glyph
         vex::Glyph mid_glyph('#', midpoint);
@@ -36,16 +35,17 @@ public:
         vex::Text h_text("We have HLines", {11, 3});
         draw(h_text);
 
-        vex::VLine v_line({3, 5}, {3, 11});
+        vex::VLine v_line({3, 5}, {3, 16});
         v_line.setAttributes(getAttribute("cyan"));
         draw(v_line);
         vex::Text v_text("And VLines", {5, 6});
+        v_text.setVertical(true);
         draw(v_text);
 
-        vex::Line a_line('*', {5, 8}, {14, 14});
+        vex::Line a_line('*', {9, 8}, {16, 14});
         a_line.setAttributes(getAttribute("magenta"));
         draw(a_line);
-        vex::Text a_text("And Arbitrary Lines!", {12, 10});
+        vex::Text a_text("And Arbitrary Lines!", {14, 10});
         draw(a_text);
 
         // TODO: vex::FillRect
@@ -54,9 +54,10 @@ public:
         // TODO: vex::Ellipse
     }
 
+    // TODO: Turn into input -> update -> render loop
     void run() override {
         int key;
-        vex::Text fps("", {0, LINES - 1});
+        vex::Text fps("", {0, 0});
         while((key = getch()) != 'q') {
             elapsedTime = clock.getElapsedTime(true);
             fps.setText("FPS: " + std::to_string(1.0 / elapsedTime));

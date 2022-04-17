@@ -164,6 +164,8 @@ namespace vex {
         void drawCharAtPoint(char ch, Vec2i p, WINDOW * win = NULL);
         void drawStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
         void drawCenteredStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
+        void drawVerticalStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
+        void drawCenteredVerticalStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
 
         void drawCustomHLineBetweenPoints(char ch, Vec2i a, Vec2i b, WINDOW * win = NULL);
         void drawHLineBetweenPoints(Vec2i a, Vec2i b, WINDOW * win = NULL);
@@ -197,6 +199,7 @@ namespace vex {
     private:
         std::string text;
         bool centered = false;
+        bool vertical = false;
 
     public:
         Text(std::string text_, Vec2i pos_);
@@ -204,6 +207,7 @@ namespace vex {
         virtual void draw(Engine& engine) override;
         void setText(std::string text_);
         void setCentered(bool centered_);
+        void setVertical(bool vertical_);
 
     };
 
@@ -256,7 +260,9 @@ namespace vex {
     Text::Text(std::string text_, Vec2i pos_): Renderable(pos_), text(text_) {}
     void Text::draw(Engine& engine) {
         engine.setAttributes(attr);
-        if(centered) { engine.drawCenteredStringAtPoint(text, pos); }
+        if(centered && vertical) { engine.drawCenteredVerticalStringAtPoint(text, pos); }
+        else if(centered) { engine.drawCenteredStringAtPoint(text, pos); }
+        else if(vertical) { engine.drawVerticalStringAtPoint(text, pos); }
         else { engine.drawStringAtPoint(text, pos); }
         engine.unsetAttributes(attr);
     }
@@ -265,6 +271,9 @@ namespace vex {
     }
     void Text::setCentered(bool centered_) {
         centered = centered_;
+    }
+    void Text::setVertical(bool vertical_) {
+        vertical = vertical_;
     }
 
     // GLYPH
@@ -437,18 +446,29 @@ namespace vex {
         }
     }
     void Engine::drawStringAtPoint(std::string text, Vec2i p, WINDOW * win) {
-        if(win != NULL) {
-            wmove(win, p.y, p.x);
-            waddstr(win, text.c_str());
-        } else {
-            move(p.y, p.x);
-            addstr(text.c_str());
+        for(char c : text) {
+            drawCharAtPoint(c, p, win);
+            p.x++;
         }
     }
     void Engine::drawCenteredStringAtPoint(std::string text, Vec2i p, WINDOW * win) {
         // Compute new point offset by half of string's length
         size_t offset = text.size() / 2;
         Vec2i newPoint(p.x - offset, p.y);
+        
+        // Delegate to drawStringAtPoint with new point
+        drawStringAtPoint(text, newPoint, win);
+    }
+    void Engine::drawVerticalStringAtPoint(std::string text, Vec2i p, WINDOW * win) {
+        for(char c : text) {
+            drawCharAtPoint(c, p, win);
+            p.y++;
+        }
+    }
+    void Engine::drawCenteredVerticalStringAtPoint(std::string text, Vec2i p, WINDOW * win) {
+        // Compute new point offset by half of string's length
+        size_t offset = text.size() / 2;
+        Vec2i newPoint(p.x, p.y - offset);
         
         // Delegate to drawStringAtPoint with new point
         drawStringAtPoint(text, newPoint, win);
