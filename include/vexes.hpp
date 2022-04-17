@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include <cmath>
+#include <chrono>
 
 // CONSTANTS
 namespace vex {
@@ -93,6 +94,7 @@ namespace vex {
 
     // DECLARATIONS
     class Renderable;
+    class Clock;
     class Engine;
 
     // DEFINITIONS
@@ -110,9 +112,25 @@ namespace vex {
 
     };
 
+    class Clock {
+
+    private:
+        std::chrono::steady_clock stClock;
+        std::chrono::time_point<std::chrono::steady_clock> t;
+
+    public:
+        Clock();
+
+        double getElapsedTime(bool reset = false);
+
+    };
+
     class Engine {
 
     protected:
+        Clock clock;
+        double elapsedTime = 0.0;
+
         void initializeScreenVariables();
         void initializeColorPairs();
         void setupCursesEnvironment();
@@ -142,6 +160,7 @@ namespace vex {
         void unsetAttributes(int attr, WINDOW * win = NULL);
         int combineAttributes(int num, ...);
 
+        // TODO: Add out-of-bounds checks to all draw methods
         void drawCharAtPoint(char ch, Vec2i p, WINDOW * win = NULL);
         void drawStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
         void drawCenteredStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
@@ -183,6 +202,7 @@ namespace vex {
         Text(std::string text_, Vec2i pos_);
 
         virtual void draw(Engine& engine) override;
+        void setText(std::string text_);
         void setCentered(bool centered_);
 
     };
@@ -240,6 +260,9 @@ namespace vex {
         else { engine.drawStringAtPoint(text, pos); }
         engine.unsetAttributes(attr);
     }
+    void Text::setText(std::string text_) {
+        text = text_;
+    }
     void Text::setCentered(bool centered_) {
         centered = centered_;
     }
@@ -288,6 +311,19 @@ namespace vex {
         engine.unsetAttributes(engine.getAttribute("alternate"));
     }
 
+    // CLOCK
+    Clock::Clock() {
+        t = stClock.now();
+    }
+    double Clock::getElapsedTime(bool reset) {
+        std::chrono::time_point<std::chrono::steady_clock> n = stClock.now();
+        std::chrono::duration<double> diff = n - t;
+
+        if(reset) { t = n; }
+
+        return diff.count();
+    }
+
     // ENGINE BASE CLASS
     Engine::Engine() { setupCursesEnvironment(); }
     Engine::~Engine() { teardownCursesEnvironment(); }
@@ -300,7 +336,8 @@ namespace vex {
         noecho();		        // Disable echoing keys to console
         start_color();		    // Enable color mode
         curs_set(0);		    // Set cursor to be invisible
-        timeout(50);		    // Make getch a non-blocking call
+        timeout(16);		    // Make getch a non-blocking call
+                                // timeout of 16 is ~60 FPS
     }
     void Engine::initializeColorPairs() {
         int backgroundColor = -1; // Transparency
