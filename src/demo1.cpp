@@ -49,7 +49,14 @@ public:
         vex::Text * a_text = new vex::Text("And Arbitrary Lines!", {14, 10});
         renderables.push_back(a_text);
 
-        // TODO: vex::FillRect
+        // vex::Quad
+        vex::Quad * rect = new vex::Quad({{COLS - 32, 1}, {30, 9}});
+        rect->setAttributes(getAttribute("blue"));
+        renderables.push_back(rect);
+        vex::Text * rect_text = new vex::Text("We have Quadrilaterals!", {COLS - 28, 5});
+        rect_text->setAttributes(getAttribute("blue") | getAttribute("reverse") | getAttribute("bold"));
+        renderables.push_back(rect_text);
+
         // TODO: vex::Border
         // TODO: vex::Circle
         // TODO: vex::Ellipse

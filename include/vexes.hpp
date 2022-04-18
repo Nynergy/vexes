@@ -246,6 +246,18 @@ namespace vex {
 
     };
 
+    class Quad : public Renderable {
+
+    private:
+        Vec2i dim;
+
+    public:
+        Quad(IntRect rect);
+
+        virtual void draw(Engine& engine) override;
+
+    };
+
 }
 
 // IMPLEMENTATIONS
@@ -320,6 +332,18 @@ namespace vex {
         engine.setAttributes(engine.getAttribute("alternate"));
         Line::draw(engine);
         engine.unsetAttributes(engine.getAttribute("alternate"));
+    }
+
+    // QUADS
+    Quad::Quad(IntRect rect): Renderable({rect.x, rect.y}), dim({rect.w, rect.h}) {}
+    void Quad::draw(Engine& engine) {
+        engine.setAttributes(attr | engine.getAttribute("reverse"));
+        for(int x = pos.x; x < pos.x + dim.x; x++) {
+            for(int y = pos.y; y < pos.y + dim.y; y++) {
+                engine.drawCharAtPoint(' ', {x, y});
+            }
+        }
+        engine.unsetAttributes(attr | engine.getAttribute("reverse"));
     }
 
     // CLOCK
