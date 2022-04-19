@@ -80,6 +80,13 @@ namespace vex {
             return Vec2<T>(x + w, y + h);
         }
 
+        Vec2<T> origin() const {
+            return Vec2<T>(x, y);
+        }
+        Vec2<T> dim() const {
+            return Vec2<T>(w, h);
+        }
+
         bool operator == (const Rect& other) const {
             return (x == other.x && y == other.y && w == other.w && h == other.h);
         }
@@ -161,7 +168,6 @@ namespace vex {
         void unsetAttributes(int attr, WINDOW * win = NULL);
         int combineAttributes(int num, ...);
 
-        // TODO: Add out-of-bounds checks to all draw methods
         void drawCharAtPoint(char ch, Vec2i p, WINDOW * win = NULL);
         void drawStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
         void drawCenteredStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
@@ -214,7 +220,7 @@ namespace vex {
 
     class Line : public Renderable {
 
-    private:
+    protected:
         char glyph;
         Vec2i a, b;
         std::vector<Glyph> line;
@@ -246,13 +252,26 @@ namespace vex {
 
     };
 
+    class CustomQuad : public Renderable {
+
+    private:
+        char glyph;
+        IntRect dim;
+
+    public:
+        CustomQuad(char glyph_, IntRect dim_);
+
+        virtual void draw(Engine& engine) override;
+
+    };
+
     class Quad : public Renderable {
 
     private:
-        Vec2i dim;
+        IntRect dim;
 
     public:
-        Quad(IntRect rect);
+        Quad(IntRect dim_);
 
         virtual void draw(Engine& engine) override;
 
@@ -317,7 +336,8 @@ namespace vex {
     }
 
     HLine::HLine(Vec2i a_, Vec2i b_): Line(ACS_HLINE, a_, b_) {
-        // TODO: Ensure points have the same Y value
+        // Ensure points have the same Y value
+        a.y = b.y;
     }
     void HLine::draw(Engine& engine) {
         engine.setAttributes(engine.getAttribute("alternate"));
@@ -326,7 +346,8 @@ namespace vex {
     }
 
     VLine::VLine(Vec2i a_, Vec2i b_): Line(ACS_VLINE, a_, b_) {
-        // TODO: Ensure points have the same X value
+        // Ensure points have the same X value
+        a.x = b.x;
     }
     void VLine::draw(Engine& engine) {
         engine.setAttributes(engine.getAttribute("alternate"));
@@ -335,12 +356,24 @@ namespace vex {
     }
 
     // QUADS
-    Quad::Quad(IntRect rect): Renderable({rect.x, rect.y}), dim({rect.w, rect.h}) {}
+    CustomQuad::CustomQuad(char glyph_, IntRect dim_)
+        : Renderable(dim_.origin()), glyph(glyph_), dim(dim_) {}
+    void CustomQuad::draw(Engine& engine) {
+        engine.setAttributes(attr);
+        for(int x = 0; x < dim.w; x++) {
+            for(int y = 0; y < dim.h; y++) {
+                engine.drawCharAtPoint(glyph, {x + dim.x, y + dim.y});
+            }
+        }
+        engine.unsetAttributes(attr);
+    }
+
+    Quad::Quad(IntRect dim_): Renderable(dim_.origin()), dim(dim_) {}
     void Quad::draw(Engine& engine) {
         engine.setAttributes(attr | engine.getAttribute("reverse"));
-        for(int x = pos.x; x < pos.x + dim.x; x++) {
-            for(int y = pos.y; y < pos.y + dim.y; y++) {
-                engine.drawCharAtPoint(' ', {x, y});
+        for(int x = 0; x < dim.w; x++) {
+            for(int y = 0; y < dim.h; y++) {
+                engine.drawCharAtPoint(' ', {x + dim.x, y + dim.y});
             }
         }
         engine.unsetAttributes(attr | engine.getAttribute("reverse"));

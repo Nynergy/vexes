@@ -57,6 +57,13 @@ public:
         rect_text->setAttributes(getAttribute("blue") | getAttribute("reverse") | getAttribute("bold"));
         renderables.push_back(rect_text);
 
+        vex::CustomQuad * custom_rect = new vex::CustomQuad('%', {{COLS - 32, 11}, {30, 9}});
+        custom_rect->setAttributes(getAttribute("red") | getAttribute("bold"));
+        renderables.push_back(custom_rect);
+        vex::Text * custom_rect_text = new vex::Text("And Custom Quads, too!", {COLS - 28, 15});
+        custom_rect_text->setAttributes(getAttribute("red") | getAttribute("bold"));
+        renderables.push_back(custom_rect_text);
+
         // TODO: vex::Border
         // TODO: vex::Circle
         // TODO: vex::Ellipse
