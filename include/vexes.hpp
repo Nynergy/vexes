@@ -274,6 +274,28 @@ namespace vex {
 
     };
 
+    class CustomBorder : public Renderable {
+
+    private:
+        std::vector<char> glyphs;
+        IntRect dim;
+
+    public:
+        CustomBorder(std::vector<char> glyphs_, IntRect dim_);
+
+        virtual void draw(Engine& engine) override;
+
+    };
+
+    class Border : public CustomBorder {
+
+    public:
+        Border(IntRect dim_);
+
+        virtual void draw(Engine& engine) override;
+
+    };
+
 }
 
 // IMPLEMENTATIONS
@@ -370,6 +392,38 @@ namespace vex {
         engine.setAttributes(engine.getAttribute("reverse"));
         CustomQuad::draw(engine);
         engine.unsetAttributes(engine.getAttribute("reverse"));
+    }
+
+    // BORDERS
+    CustomBorder::CustomBorder(std::vector<char> glyphs_, IntRect dim_)
+        : Renderable(dim_.origin()), glyphs(glyphs_), dim(dim_) {}
+    void CustomBorder::draw(Engine& engine) {
+        engine.setAttributes(attr);
+
+        // Draw top and bottom of box
+        engine.drawCustomHLineBetweenPoints(glyphs[0], dim.ul(), dim.ur());
+        engine.drawCustomHLineBetweenPoints(glyphs[1], dim.ll(), dim.lr());
+
+        // Draw left and right of box
+        engine.drawCustomVLineBetweenPoints(glyphs[2], dim.ul(), dim.ll());
+        engine.drawCustomVLineBetweenPoints(glyphs[3], dim.ur(), dim.lr());
+
+        // Draw corners of the box
+        engine.drawCharAtPoint(glyphs[4], dim.ul());
+        engine.drawCharAtPoint(glyphs[5], dim.ur());
+        engine.drawCharAtPoint(glyphs[6], dim.ll());
+        engine.drawCharAtPoint(glyphs[7], dim.lr());
+
+        engine.unsetAttributes(attr);
+    }
+
+    Border::Border(IntRect dim_): CustomBorder({ACS_HLINE, ACS_HLINE, ACS_VLINE, ACS_VLINE,
+                                                ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER},
+                                               dim_) {}
+    void Border::draw(Engine& engine) {
+        engine.setAttributes(engine.getAttribute("alternate"));
+        CustomBorder::draw(engine);
+        engine.unsetAttributes(engine.getAttribute("alternate"));
     }
 
     // CLOCK

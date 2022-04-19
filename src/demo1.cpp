@@ -64,9 +64,21 @@ public:
         custom_rect_text->setAttributes(getAttribute("red") | getAttribute("bold"));
         renderables.push_back(custom_rect_text);
 
-        // TODO: vex::Border
-        // TODO: vex::Circle
-        // TODO: vex::Ellipse
+        // vex::Border
+        std::vector<char> border_glyphs = {'=', '=', '|', '|', '+', '+', '+', '+'};
+        vex::IntRect custom_border_dim({COLS - 36, LINES - 16}, {30, 10});
+        vex::CustomBorder * custom_border = new vex::CustomBorder(border_glyphs, custom_border_dim);
+        custom_border->setAttributes(getAttribute("green"));
+        renderables.push_back(custom_border);
+        vex::Text * custom_border_text = new vex::Text("Or Create Custom Borders!", {COLS - 33, LINES - 11});
+        custom_border_text->setAttributes(getAttribute("green"));
+        renderables.push_back(custom_border_text);
+
+        vex::IntRect border_dim({COLS - 36, LINES - 27}, {30, 10});
+        vex::Border * border = new vex::Border(border_dim);
+        renderables.push_back(border);
+        vex::Text * border_text = new vex::Text("Use Default Borders...", {COLS - 31, LINES - 22});
+        renderables.push_back(border_text);
 
         vex::Text * init_txt = new vex::Text("Engine initialized successfully!", {0, LINES - 2});
         init_txt->setAttributes(getAttribute("green"));
