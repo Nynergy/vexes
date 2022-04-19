@@ -265,10 +265,7 @@ namespace vex {
 
     };
 
-    class Quad : public Renderable {
-
-    private:
-        IntRect dim;
+    class Quad : public CustomQuad {
 
     public:
         Quad(IntRect dim_);
@@ -368,15 +365,11 @@ namespace vex {
         engine.unsetAttributes(attr);
     }
 
-    Quad::Quad(IntRect dim_): Renderable(dim_.origin()), dim(dim_) {}
+    Quad::Quad(IntRect dim_): CustomQuad(' ', dim_) {}
     void Quad::draw(Engine& engine) {
-        engine.setAttributes(attr | engine.getAttribute("reverse"));
-        for(int x = 0; x < dim.w; x++) {
-            for(int y = 0; y < dim.h; y++) {
-                engine.drawCharAtPoint(' ', {x + dim.x, y + dim.y});
-            }
-        }
-        engine.unsetAttributes(attr | engine.getAttribute("reverse"));
+        engine.setAttributes(engine.getAttribute("reverse"));
+        CustomQuad::draw(engine);
+        engine.unsetAttributes(engine.getAttribute("reverse"));
     }
 
     // CLOCK
