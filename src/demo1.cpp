@@ -53,32 +53,36 @@ public:
         vex::Quad * rect = new vex::Quad({{COLS - 32, 1}, {30, 9}});
         rect->setAttributes(getAttribute("blue"));
         renderables.push_back(rect);
-        vex::Text * rect_text = new vex::Text("We have Quadrilaterals!", {COLS - 28, 5});
+        vex::Text * rect_text = new vex::Text("We have Quadrilaterals!", rect->center());
+        rect_text->setCentered(true);
         rect_text->setAttributes(getAttribute("blue") | getAttribute("reverse") | getAttribute("bold"));
         renderables.push_back(rect_text);
 
         vex::CustomQuad * custom_rect = new vex::CustomQuad('%', {{COLS - 32, 11}, {30, 9}});
         custom_rect->setAttributes(getAttribute("red") | getAttribute("bold"));
         renderables.push_back(custom_rect);
-        vex::Text * custom_rect_text = new vex::Text("And Custom Quads, too!", {COLS - 28, 15});
+        vex::Text * custom_rect_text = new vex::Text("And Custom Quads, too!", custom_rect->center());
+        custom_rect_text->setCentered(true);
         custom_rect_text->setAttributes(getAttribute("red") | getAttribute("bold"));
         renderables.push_back(custom_rect_text);
 
         // vex::Border
+        vex::IntRect border_dim({COLS - 36, LINES - 27}, {30, 10});
+        vex::Border * border = new vex::Border(border_dim);
+        renderables.push_back(border);
+        vex::Text * border_text = new vex::Text("Use Default Borders...", border->center());
+        border_text->setCentered(true);
+        renderables.push_back(border_text);
+
         std::vector<char> border_glyphs = {'=', '=', '|', '|', '+', '+', '+', '+'};
         vex::IntRect custom_border_dim({COLS - 36, LINES - 16}, {30, 10});
         vex::CustomBorder * custom_border = new vex::CustomBorder(border_glyphs, custom_border_dim);
         custom_border->setAttributes(getAttribute("green"));
         renderables.push_back(custom_border);
-        vex::Text * custom_border_text = new vex::Text("Or Create Custom Borders!", {COLS - 33, LINES - 11});
+        vex::Text * custom_border_text = new vex::Text("Or Create Custom Borders!", custom_border->center());
+        custom_border_text->setCentered(true);
         custom_border_text->setAttributes(getAttribute("green"));
         renderables.push_back(custom_border_text);
-
-        vex::IntRect border_dim({COLS - 36, LINES - 27}, {30, 10});
-        vex::Border * border = new vex::Border(border_dim);
-        renderables.push_back(border);
-        vex::Text * border_text = new vex::Text("Use Default Borders...", {COLS - 31, LINES - 22});
-        renderables.push_back(border_text);
 
         vex::Text * init_txt = new vex::Text("Engine initialized successfully!", {0, LINES - 2});
         init_txt->setAttributes(getAttribute("green"));

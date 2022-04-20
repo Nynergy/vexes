@@ -1,11 +1,11 @@
 #pragma once
 
+#include <chrono>
+#include <cmath>
 #include <ncurses.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <cmath>
-#include <chrono>
 
 // CONSTANTS
 namespace vex {
@@ -53,6 +53,13 @@ namespace vex {
         Vec2 operator - (const Vec2& other) const {
             return Vec2<T>(x - other.x, y - other.y);
         }
+
+        Vec2 operator * (const Vec2& other) const {
+            return Vec2<T>(x * other.x, y * other.y);
+        }
+        Vec2 operator / (const Vec2& other) const {
+            return Vec2<T>(x / other.x, y / other.y);
+        }
     };
 
     typedef Vec2<int> Vec2i;
@@ -62,10 +69,14 @@ namespace vex {
     struct Rect {
         T x, y, w, h;
 
-        Rect(T x_, T y_, T w_, T h_): x(x_), y(y_), w(w_), h(h_) {}
-        Rect(T x_, T y_, Vec2<T> dim_): x(x_), y(y_), w(dim_.x), h(dim_.y) {}
-        Rect(Vec2<T> origin_, T w_, T h_): x(origin_.x), y(origin_.y), w(w_), h(h_) {}
-        Rect(Vec2<T> origin_, Vec2<T> dim_): x(origin_.x), y(origin_.y), w(dim_.x), h(dim_.y) {}
+        Rect(T x_, T y_, T w_, T h_)
+            : x(x_), y(y_), w(w_), h(h_) {}
+        Rect(T x_, T y_, Vec2<T> dim_)
+            : x(x_), y(y_), w(dim_.x), h(dim_.y) {}
+        Rect(Vec2<T> origin_, T w_, T h_)
+            : x(origin_.x), y(origin_.y), w(w_), h(h_) {}
+        Rect(Vec2<T> origin_, Vec2<T> dim_)
+            : x(origin_.x), y(origin_.y), w(dim_.x), h(dim_.y) {}
 
         Vec2<T> ul() const {
             return Vec2<T>(x, y);
@@ -86,13 +97,18 @@ namespace vex {
         Vec2<T> dim() const {
             return Vec2<T>(w, h);
         }
+        Vec2<T> center() const {
+            return Vec2<T>(x + w / 2, y + h / 2);
+        }
 
         bool operator == (const Rect& other) const {
-            return (x == other.x && y == other.y && w == other.w && h == other.h);
+            return (x == other.x && y == other.y &&
+                    w == other.w && h == other.h);
         }
     };
 
     typedef Rect<int> IntRect;
+    typedef Rect<float> FloatRect;
 
 }
 
@@ -164,23 +180,11 @@ namespace vex {
 
     public: // DRAWING METHODS
         int getAttribute(std::string name);
-        void setAttributes(int attr, WINDOW * win = NULL);
-        void unsetAttributes(int attr, WINDOW * win = NULL);
+        void setAttributes(int attr, WINDOW * win = stdscr);
+        void unsetAttributes(int attr, WINDOW * win = stdscr);
         int combineAttributes(int num, ...);
 
-        void drawCharAtPoint(char ch, Vec2i p, WINDOW * win = NULL);
-        void drawStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
-        void drawCenteredStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
-        void drawVerticalStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
-        void drawCenteredVerticalStringAtPoint(std::string text, Vec2i p, WINDOW * win = NULL);
-
-        void drawCustomHLineBetweenPoints(char ch, Vec2i a, Vec2i b, WINDOW * win = NULL);
-        void drawHLineBetweenPoints(Vec2i a, Vec2i b, WINDOW * win = NULL);
-        void drawCustomVLineBetweenPoints(char ch, Vec2i a, Vec2i b, WINDOW * win = NULL);
-        void drawVLineBetweenPoints(Vec2i a, Vec2i b, WINDOW * win = NULL);
-
-        void drawCustomBox(IntRect b, char * chars, WINDOW * win = NULL);
-        void drawBox(IntRect b, WINDOW * win = NULL);
+        void drawCharAtPoint(char ch, Vec2i p, WINDOW * win = stdscr);
 
     };
 
@@ -205,6 +209,7 @@ namespace vex {
 
     private:
         std::string text;
+        int half_length;
         bool centered = false;
         bool vertical = false;
 
@@ -262,6 +267,7 @@ namespace vex {
         CustomQuad(char glyph_, IntRect dim_);
 
         virtual void draw(Engine& engine) override;
+        Vec2i center();
 
     };
 
@@ -279,11 +285,14 @@ namespace vex {
     private:
         std::vector<char> glyphs;
         IntRect dim;
+        std::vector<Line> lines;
+        std::vector<Glyph> corners;
 
     public:
         CustomBorder(std::vector<char> glyphs_, IntRect dim_);
 
         virtual void draw(Engine& engine) override;
+        Vec2i center();
 
     };
 
@@ -309,13 +318,24 @@ namespace vex {
     }
 
     // TEXT
-    Text::Text(std::string text_, Vec2i pos_): Renderable(pos_), text(text_) {}
+    Text::Text(std::string text_, Vec2i pos_): Renderable(pos_), text(text_) {
+        half_length = text.size() / 2;
+    }
     void Text::draw(Engine& engine) {
         engine.setAttributes(attr);
-        if(centered && vertical) { engine.drawCenteredVerticalStringAtPoint(text, pos); }
-        else if(centered) { engine.drawCenteredStringAtPoint(text, pos); }
-        else if(vertical) { engine.drawVerticalStringAtPoint(text, pos); }
-        else { engine.drawStringAtPoint(text, pos); }
+
+        Vec2i origin = pos;
+
+        if(centered) {
+            if(vertical) { origin.y -= half_length; }
+            else { origin.x -= half_length; }
+        }
+
+        for(char& c : text) {
+            engine.drawCharAtPoint(c, origin);
+            if(vertical) { origin.y++; } else { origin.x++; }
+        }
+
         engine.unsetAttributes(attr);
     }
     void Text::setText(std::string text_) {
@@ -337,7 +357,8 @@ namespace vex {
     }
 
     // LINES
-    Line::Line(char glyph_, Vec2i a_, Vec2i b_): Renderable(a), glyph(glyph_), a(a_), b(b_) {}
+    Line::Line(char glyph_, Vec2i a_, Vec2i b_)
+        : Renderable(a), glyph(glyph_), a(a_), b(b_) {}
     void Line::constructPoints(Engine& engine) {
         std::vector<Vec2i> points = engine.getPointsOnLine(a, b);
         for(auto& p : points) {
@@ -386,6 +407,9 @@ namespace vex {
         }
         engine.unsetAttributes(attr);
     }
+    Vec2i CustomQuad::center() {
+        return dim.center();
+    }
 
     Quad::Quad(IntRect dim_): CustomQuad(' ', dim_) {}
     void Quad::draw(Engine& engine) {
@@ -396,29 +420,37 @@ namespace vex {
 
     // BORDERS
     CustomBorder::CustomBorder(std::vector<char> glyphs_, IntRect dim_)
-        : Renderable(dim_.origin()), glyphs(glyphs_), dim(dim_) {}
+        : Renderable(dim_.origin()), glyphs(glyphs_), dim(dim_) {
+        // Top, Bottom, Left, and Right Lines
+        lines.push_back(Line(glyphs[0], dim.ul(), dim.ur()));
+        lines.push_back(Line(glyphs[1], dim.ll(), dim.lr()));
+        lines.push_back(Line(glyphs[2], dim.ul(), dim.ll()));
+        lines.push_back(Line(glyphs[3], dim.ur(), dim.lr()));
+
+        // UL, UR, LL, and LR Corners
+        corners.push_back(Glyph(glyphs[4], dim.ul()));
+        corners.push_back(Glyph(glyphs[5], dim.ur()));
+        corners.push_back(Glyph(glyphs[6], dim.ll()));
+        corners.push_back(Glyph(glyphs[7], dim.lr()));
+    }
     void CustomBorder::draw(Engine& engine) {
         engine.setAttributes(attr);
-
-        // Draw top and bottom of box
-        engine.drawCustomHLineBetweenPoints(glyphs[0], dim.ul(), dim.ur());
-        engine.drawCustomHLineBetweenPoints(glyphs[1], dim.ll(), dim.lr());
-
-        // Draw left and right of box
-        engine.drawCustomVLineBetweenPoints(glyphs[2], dim.ul(), dim.ll());
-        engine.drawCustomVLineBetweenPoints(glyphs[3], dim.ur(), dim.lr());
-
-        // Draw corners of the box
-        engine.drawCharAtPoint(glyphs[4], dim.ul());
-        engine.drawCharAtPoint(glyphs[5], dim.ur());
-        engine.drawCharAtPoint(glyphs[6], dim.ll());
-        engine.drawCharAtPoint(glyphs[7], dim.lr());
-
+        for(auto& line : lines) {
+            engine.draw(line);
+        }
+        for(auto& glyph : corners) {
+            engine.draw(glyph);
+        }
         engine.unsetAttributes(attr);
     }
+    Vec2i CustomBorder::center() {
+        return dim.center();
+    }
 
-    Border::Border(IntRect dim_): CustomBorder({ACS_HLINE, ACS_HLINE, ACS_VLINE, ACS_VLINE,
-                                                ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER},
+    Border::Border(IntRect dim_): CustomBorder({ACS_HLINE, ACS_HLINE,
+                                                ACS_VLINE, ACS_VLINE,
+                                                ACS_ULCORNER, ACS_URCORNER,
+                                                ACS_LLCORNER, ACS_LRCORNER},
                                                dim_) {}
     void Border::draw(Engine& engine) {
         engine.setAttributes(engine.getAttribute("alternate"));
@@ -517,18 +549,10 @@ namespace vex {
         }
     }
     void Engine::setAttributes(int attr, WINDOW * win) {
-        if(win != NULL) {
-            wattron(win, attr);
-        } else {
-            attron(attr);
-        }
+        wattron(win, attr);
     }
     void Engine::unsetAttributes(int attr, WINDOW * win) {
-        if(win != NULL) {
-            wattroff(win, attr);
-        } else {
-            attroff(attr);
-        }
+        wattroff(win, attr);
     }
     int Engine::combineAttributes(int num, ...) {
         va_list argList;
@@ -543,114 +567,8 @@ namespace vex {
         return attr;
     }
     void Engine::drawCharAtPoint(char ch, Vec2i p, WINDOW * win) {
-        if(win != NULL) {
-            wmove(win, p.y, p.x);
-            waddch(win, ch);
-        } else {
-            move(p.y, p.x);
-            addch(ch);
-        }
-    }
-    void Engine::drawStringAtPoint(std::string text, Vec2i p, WINDOW * win) {
-        for(char c : text) {
-            drawCharAtPoint(c, p, win);
-            p.x++;
-        }
-    }
-    void Engine::drawCenteredStringAtPoint(std::string text, Vec2i p, WINDOW * win) {
-        // Compute new point offset by half of string's length
-        size_t offset = text.size() / 2;
-        Vec2i newPoint(p.x - offset, p.y);
-        
-        // Delegate to drawStringAtPoint with new point
-        drawStringAtPoint(text, newPoint, win);
-    }
-    void Engine::drawVerticalStringAtPoint(std::string text, Vec2i p, WINDOW * win) {
-        for(char c : text) {
-            drawCharAtPoint(c, p, win);
-            p.y++;
-        }
-    }
-    void Engine::drawCenteredVerticalStringAtPoint(std::string text, Vec2i p, WINDOW * win) {
-        // Compute new point offset by half of string's length
-        size_t offset = text.size() / 2;
-        Vec2i newPoint(p.x, p.y - offset);
-        
-        // Delegate to drawStringAtPoint with new point
-        drawStringAtPoint(text, newPoint, win);
-    }
-    void Engine::drawCustomHLineBetweenPoints(char ch, Vec2i a, Vec2i b, WINDOW * win) {
-        // Only draw line if points are on the same Y level
-        if(a.y != b.y) { return; }
-
-        // To avoid issues of order, we check which x is larger
-        if(a.x < b.x) {
-            for(int i = a.x; i < b.x + 1; i++) {
-                drawCharAtPoint(ch, {i, a.y}, win);
-            }
-        } else if(a.x > b.x) {
-            for(int i = b.x; i < a.x + 1; i++) {
-                drawCharAtPoint(ch, {i, b.y}, win);
-            }
-        } else {
-            // x is equal, so we only draw a single character
-            drawCharAtPoint(ch, a, win);
-        }
-    }
-    void Engine::drawHLineBetweenPoints(Vec2i a, Vec2i b, WINDOW * win) {
-        // Delegate to the custom line with the HLINE character
-        setAttributes(getAttribute("alternate"), win);
-        drawCustomHLineBetweenPoints(ACS_HLINE, a, b, win);
-        unsetAttributes(getAttribute("alternate"), win);
-    }
-    void Engine::drawCustomVLineBetweenPoints(char ch, Vec2i a, Vec2i b, WINDOW * win) {
-        // Only draw line if points are on the same X level
-        if(a.x != b.x) { return; }
-
-        // To avoid issues of order, we check which y is larger
-        if(a.y < b.y) {
-            for(int i = a.y; i < b.y + 1; i++) {
-                drawCharAtPoint(ch, {a.x, i}, win);
-            }
-        } else if(a.y > b.y) {
-            for(int i = b.y; i < a.y + 1; i++) {
-                drawCharAtPoint(ch, {b.x, i}, win);
-            }
-        } else {
-            // y is equal, so we only draw a single character
-            drawCharAtPoint(ch, a, win);
-        }
-    }
-    void Engine::drawVLineBetweenPoints(Vec2i a, Vec2i b, WINDOW * win) {
-        // Delegate to the custom line with the VLINE character
-        setAttributes(getAttribute("alternate"), win);
-        drawCustomVLineBetweenPoints(ACS_VLINE, a, b, win);
-        unsetAttributes(getAttribute("alternate"), win);
-    }
-    void Engine::drawCustomBox(IntRect b, char * chars, WINDOW * win) {
-        // Draw top and bottom of box
-        drawCustomHLineBetweenPoints(chars[0], b.ul(), b.ur(), win);
-        drawCustomHLineBetweenPoints(chars[1], b.ll(), b.lr(), win);
-
-        // Draw left and right of box
-        drawCustomVLineBetweenPoints(chars[2], b.ul(), b.ll(), win);
-        drawCustomVLineBetweenPoints(chars[3], b.ur(), b.lr(), win);
-
-        // Draw corners of the box
-        drawCharAtPoint(chars[4], b.ul(), win);
-        drawCharAtPoint(chars[5], b.ur(), win);
-        drawCharAtPoint(chars[6], b.ll(), win);
-        drawCharAtPoint(chars[7], b.lr(), win);
-    }
-    void Engine::drawBox(IntRect b, WINDOW * win) {
-        // Define alternate characters to use and set attribute on
-        char alts[] = {
-                        ACS_HLINE, ACS_HLINE, ACS_VLINE, ACS_VLINE,
-                        ACS_ULCORNER, ACS_URCORNER, ACS_LLCORNER, ACS_LRCORNER
-                      };
-        setAttributes(getAttribute("alternate"), win);
-        drawCustomBox(b, alts, win);
-        unsetAttributes(getAttribute("alternate"), win);
+        wmove(win, p.y, p.x);
+        waddch(win, ch);
     }
 
 }
