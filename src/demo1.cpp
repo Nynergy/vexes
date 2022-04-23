@@ -214,7 +214,7 @@ public:
     // drawing the objects.
     void render() {
         for(auto& obj : renderables) {
-            draw(*obj);
+            draw(obj);
         }
     }
 

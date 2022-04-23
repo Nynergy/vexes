@@ -25,22 +25,22 @@ LDLIBS := -lncurses -ltinfo
 # Indicate when a rule does not produce any target output
 .PHONY: all clean
 
-all: $(DEMO_DIR)/demo1 #$(DEMO_DIR)/demo2 $(DEMO_DIR)/demo3 $(DEMO_DIR)/demo4 $(DEMO_DIR)/demo5
+all: $(DEMO_DIR)/demo1 $(DEMO_DIR)/demo2 #$(DEMO_DIR)/demo3 $(DEMO_DIR)/demo4 $(DEMO_DIR)/demo5
 
 # Linking Phase
 $(DEMO_DIR)/demo1: $(OBJ_DIR)/demo1.o | $(DEMO_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(DEMO_DIR)/demo2: $(OBJ_DIR)/demo2.o $(OBJ_DIR)/vexes.o | $(DEMO_DIR)
+$(DEMO_DIR)/demo2: $(OBJ_DIR)/demo2.o | $(DEMO_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(DEMO_DIR)/demo3: $(OBJ_DIR)/demo3.o $(OBJ_DIR)/vexes.o | $(DEMO_DIR)
+$(DEMO_DIR)/demo3: $(OBJ_DIR)/demo3.o | $(DEMO_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(DEMO_DIR)/demo4: $(OBJ_DIR)/demo4.o $(OBJ_DIR)/vexes.o | $(DEMO_DIR)
+$(DEMO_DIR)/demo4: $(OBJ_DIR)/demo4.o | $(DEMO_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-$(DEMO_DIR)/demo5: $(OBJ_DIR)/demo5.o $(OBJ_DIR)/vexes.o | $(DEMO_DIR)
+$(DEMO_DIR)/demo5: $(OBJ_DIR)/demo5.o | $(DEMO_DIR)
 	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # Compiling Phase
